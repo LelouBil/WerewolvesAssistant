@@ -1,22 +1,26 @@
 package net.leloubil.common.gamelogic.roles
 
 import net.leloubil.common.gamelogic.GameDefinition
-import net.leloubil.common.gamelogic.Player
-import net.leloubil.common.gamelogic.util.BiMap
 import ru.nsk.kstatemachine.DefaultState
+import kotlin.reflect.KClass
 
 abstract class BaseRole(val name: String) {
     abstract val winCondition: WinCondition
-    abstract val participatesIn: Set<BaseCall>
-}
-abstract class Team(val name: String){
+    abstract val participatesIn: Set<KClass<out BaseCall>>
 }
 
-abstract class WinCondition(){
+abstract class Team(val name: String) {
+}
+
+abstract class WinCondition() {
     abstract fun check(gameDefinition: GameDefinition): Boolean
 }
+//todo refactor les wincondition, surtout que les roles pourront intercepter des states
+// pour l'ange par ex, qui pourra faire day.afterVillagerKillVote.onEntry { gameDefinition.winFlags.add(AngelWinCondition) }
+// plus ou moins comme ça
 
-class TeamWinCondition(private val team: Team) : WinCondition(){
+//todo mais pour ca faut que dans toutes les Step, les sous states soient des champs, et pas des variables locales
+class TeamWinCondition(private val team: Team) : WinCondition() {
     override fun check(gameDefinition: GameDefinition): Boolean {
         return gameDefinition.rolesMapping.all {
             when (val winCondition = it.value.winCondition) {
@@ -24,20 +28,19 @@ class TeamWinCondition(private val team: Team) : WinCondition(){
                     winCondition.team != team -> it.key.alive.not()
                     else -> true
                 }
+
                 else -> false
             }
         }
     }
 }
 
-class CustomWinCondition(private val predicate: (GameDefinition) -> Boolean) : WinCondition(){
+class CustomWinCondition(private val predicate: (GameDefinition) -> Boolean) : WinCondition() {
     override fun check(gameDefinition: GameDefinition): Boolean = predicate(gameDefinition)
 }
 
 abstract class BaseCall(
-    name: String,
-    public val mustBeBefore: Set<Class<BaseRole>> = emptySet(),
-    public val mustBeAfter: Set<Class<BaseRole>> = emptySet()
+    protected val gameDefinition: GameDefinition,
+    name: String
 ) : DefaultState(name) {
-    lateinit var roles: Set<BaseRole>
 }
