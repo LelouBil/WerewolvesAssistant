@@ -7,14 +7,15 @@ import net.leloubil.common.gamelogic.Player
 import ru.nsk.kstatemachine.*
 import kotlin.reflect.KClass
 
-class WitchRole() : VillagerRole("Witch") {
+class WitchRole : VillagerRole("Witch") {
     override val participatesIn: Set<KClass<WitchCall>> = setOf(WitchCall::class)
     override val overrideStateMachine: (GameStateMachineHolder.() -> Unit)? = null
     var hasHeal = true
     var hasKill = true
 }
 
-class WitchCall(gameDefinition: GameDefinition) : BaseCall(gameDefinition,
+class WitchCall(gameDefinition: GameDefinition) : BaseCall(
+    gameDefinition,
     name = "Witch Call"
 ) {
     class WitchKill : PendingKill()
@@ -23,7 +24,7 @@ class WitchCall(gameDefinition: GameDefinition) : BaseCall(gameDefinition,
     class WitchDoNothingEvent : Event
 
     init {
-        val witch = this.gameDefinition.playerList.single() { it.role is WitchRole }.role as WitchRole
+        val witch = this.gameDefinition.playerList.single { it.role is WitchRole }.role as WitchRole
 
         val beforeWitchChoice = initialState("Before Witch choose")
 
@@ -49,7 +50,6 @@ class WitchCall(gameDefinition: GameDefinition) : BaseCall(gameDefinition,
 
         witchHeal {
             onEntry {
-                //todo verifier que c'est bien la victime des loups ou trouver un autre moyen de la récup
                 val wolvesKill = data.pendingKills.single { it is WerewolvesCall.WerewolvesKill }
                 data.pendingKills.remove(wolvesKill)
                 witch.hasHeal = false

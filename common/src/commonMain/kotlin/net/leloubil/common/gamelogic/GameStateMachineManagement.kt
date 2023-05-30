@@ -2,24 +2,25 @@
 
 package net.leloubil.common.gamelogic
 
+import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import net.leloubil.common.gamelogic.roles.BaseRole
 import net.leloubil.common.gamelogic.steps.Day
 import net.leloubil.common.gamelogic.steps.Night
-import org.lighthousegames.logging.logging
 import ru.nsk.kstatemachine.*
 
-class GameStateMachineHolder(scope: CoroutineScope,
-    gameDefinition: GameDefinition){
-    companion object {
-        val smLogger = logging("StateMachine")
-    }
-    val stateMachine : StateMachine
-    lateinit var gameStartState : State
-    lateinit var gameEndState : State
-    lateinit var day : Day
-    lateinit var night : Night
-    init{
+class GameStateMachineHolder(
+    scope: CoroutineScope,
+    gameDefinition: GameDefinition
+) {
+    val stateMachine: StateMachine
+
+    private lateinit var gameStartState: State
+    private lateinit var gameEndState: State
+    lateinit var day: Day
+    private lateinit var night: Night
+
+    init {
         stateMachine = createStateMachineBlocking(
             scope = scope,
             name = "Game State Machine",
@@ -27,10 +28,10 @@ class GameStateMachineHolder(scope: CoroutineScope,
             doNotThrowOnMultipleTransitionsMatch = false,
             start = false
         ) {
-            logger = StateMachine.Logger { lazyMessage -> smLogger.info { lazyMessage() } }
+            logger = StateMachine.Logger { lazyMessage -> Napier.i { lazyMessage() } }
             gameStartState = initialState("Game not yet started")
             gameEndState = finalState("Game finished")
-            day = addState(Day(gameDefinition,gameEndState))
+            day = addState(Day(gameDefinition, gameEndState))
             night = addState(Night(gameDefinition))
 
             gameStartState {
@@ -53,7 +54,7 @@ class GameStateMachineHolder(scope: CoroutineScope,
     }
 }
 
-public fun createGameStateMachineBuilder(
+fun createGameStateMachineBuilder(
     rolesList: Set<BaseRole>,
     gameDefinition: GameDefinition
 ): suspend (CoroutineScope) -> GameStateMachineHolder = { scope: CoroutineScope ->
@@ -66,15 +67,17 @@ public fun createGameStateMachineBuilder(
 }
 
 
-public fun createGameDefinition(
+fun createGameDefinition(
     playerNamesList: List<String>,
     rolesList: Set<BaseRole>
 ): GameDefinition {
 
-    assert(playerNamesList.size == rolesList.size)
-    assert(playerNamesList.size >= 4)
+    if (rolesList.size < playerNamesList.size) {
+        throw IllegalArgumentException("Not enough players for the given roles")
+    }
 
-    val playerList: List<Player> =playerNamesList.shuffled().zip(rolesList.shuffled()).map { Player(it.first,it.second)}
+    val playerList: List<Player> =
+        playerNamesList.shuffled().zip(rolesList.shuffled()).map { Player(it.first, it.second) }
     val gameDefinition = GameDefinition(playerList)
     val stateMachineBuilder = createGameStateMachineBuilder(rolesList, gameDefinition)
     gameDefinition.buildStateMachine = stateMachineBuilder

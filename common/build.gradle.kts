@@ -1,8 +1,11 @@
+@Suppress("DSL_SCOPE_VIOLATION")
 plugins {
     kotlin("multiplatform")
     id("org.jetbrains.compose")
     id("com.android.library")
+    alias(libs.plugins.kotest.multiplatform)
 }
+
 
 group = "net.leloubil"
 version = "1.0-SNAPSHOT"
@@ -18,37 +21,59 @@ kotlin {
                 api(compose.runtime)
                 api(compose.foundation)
                 api(compose.material)
-                val kstatemachineVersion = "0.22.1"
-                implementation("io.github.nsk90:kstatemachine:$kstatemachineVersion")
-                implementation("io.github.nsk90:kstatemachine-coroutines:$kstatemachineVersion")
-                api("org.lighthousegames:logging:1.3.0")
+                implementation(libs.kotlin.reflect)
+                implementation(libs.kstatemachine)
+                implementation(libs.kstatemachine.coroutines)
+                api(libs.logging)
+                implementation(kotlin("reflect"))
             }
         }
         val commonTest by getting {
             dependencies {
-                implementation(kotlin("test"))
+                implementation(libs.kotest.assertions.core)
+                implementation(libs.kotest.framework.engine)
+                implementation(libs.kotest.framework.datatest)
+                implementation(kotlin("test-common"))
+                implementation(kotlin("test-annotations-common"))
             }
         }
         val androidMain by getting {
             dependencies {
-                api("androidx.appcompat:appcompat:1.6.1")
-                api("androidx.core:core-ktx:1.10.1")
+                api(libs.androidx.appcompat)
+                api(libs.androidx.core.ktx)
             }
         }
         val androidInstrumentedTest by getting {
             dependencies {
-                implementation("junit:junit:4.13.2")
+                implementation(libs.junit5)
             }
         }
         val desktopMain by getting {
             dependencies {
                 api(compose.preview)
-                implementation("org.slf4j:slf4j-api:1.7.36")
-                implementation("ch.qos.logback:logback-core:1.2.3")
-                implementation("ch.qos.logback:logback-classic:1.2.3")
             }
         }
-        val desktopTest by getting
+        val desktopTest by getting {
+            dependencies {
+                implementation(libs.kotest.runner.junit5)
+            }
+        }
+    }
+}
+
+tasks.named<Test>("desktopTest") {
+    useJUnitPlatform()
+    filter {
+        isFailOnNoMatchingTests = false
+    }
+    testLogging {
+        showExceptions = true
+        showStandardStreams = true
+        events = setOf(
+            org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED,
+            org.gradle.api.tasks.testing.logging.TestLogEvent.PASSED
+        )
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
     }
 }
 

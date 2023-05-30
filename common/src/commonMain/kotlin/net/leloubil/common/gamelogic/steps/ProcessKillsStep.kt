@@ -3,7 +3,6 @@ package net.leloubil.common.gamelogic.steps
 import net.leloubil.common.gamelogic.GameDefinition
 import net.leloubil.common.gamelogic.PendingKill
 import net.leloubil.common.gamelogic.Player
-import net.leloubil.common.gamelogic.roles.BaseRole
 import ru.nsk.kstatemachine.onEntry
 
 class ProcessKillsStep(name: String, gameDefinition: GameDefinition) : GameStep(name, gameDefinition) {

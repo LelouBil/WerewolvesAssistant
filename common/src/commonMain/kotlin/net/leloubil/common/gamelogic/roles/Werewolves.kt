@@ -10,7 +10,7 @@ object WerewolvesTeam : Team("Werewolves")
 class WerewolfRole : BaseRole("Werewolf") {
     override val winTeam = WerewolvesTeam
     override val participatesIn: Set<KClass<out BaseCall>> = setOf(WerewolvesCall::class)
-    override val overrideStateMachine: (GameStateMachineHolder.() -> Unit)? = null;
+    override val overrideStateMachine: (GameStateMachineHolder.() -> Unit)? = null
 }
 
 class WerewolvesCall(gameDefinition: GameDefinition) : BaseCall(
@@ -21,10 +21,10 @@ class WerewolvesCall(gameDefinition: GameDefinition) : BaseCall(
     class WerewolvesVoteEvent(override val data: Player) : DataEvent<Player>
 
     init {
-        val werewolvesVote = initialState("Start of werewolves vote");
+        val werewolvesVote = initialState("Start of werewolves vote")
         val werewolvesKill = finalDataState<Player>("Werewolves Killed victim")
         werewolvesVote {
-            dataTransition<WerewolvesVoteEvent, Player>("Werevolves chose victim") { targetState = werewolvesKill }
+            dataTransition<WerewolvesVoteEvent, Player>("Werewolves chose victim") { targetState = werewolvesKill }
         }
         werewolvesKill {
             onEntry {

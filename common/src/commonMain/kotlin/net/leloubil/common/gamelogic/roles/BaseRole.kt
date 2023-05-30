@@ -9,14 +9,12 @@ import kotlin.reflect.KClass
 
 abstract class BaseRole(val name: String) {
     abstract val participatesIn: Set<KClass<out BaseCall>>
-    abstract val overrideStateMachine : (GameStateMachineHolder.() -> Unit)?
+    abstract val overrideStateMachine: (GameStateMachineHolder.() -> Unit)?
     abstract val winTeam: Team
 }
-
 
 
 abstract class BaseCall(
     protected val gameDefinition: GameDefinition,
     name: String
-) : DefaultState(name) {
-}
+) : DefaultState(name)
