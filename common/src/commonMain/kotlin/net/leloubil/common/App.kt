@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import kotlinx.coroutines.*
 import net.leloubil.common.gamelogic.Player
 import net.leloubil.common.gamelogic.createGameDefinition
+import net.leloubil.common.gamelogic.roles.AngelRole
 import net.leloubil.common.gamelogic.roles.WerewolfRole
 import net.leloubil.common.gamelogic.roles.WitchRole
 import org.lighthousegames.logging.logging
@@ -21,11 +22,11 @@ val log = logging()
 fun App() {
 
     CoroutineScope(Dispatchers.Default).launch {
-    val playerList = listOf(Player("1"), Player("2"), Player("3"), Player("4"))
-    val rolesList = setOf(WerewolfRole(), WerewolfRole(), WerewolfRole(), WitchRole())
+    val playerList = listOf("1","2","3","4")
+    val rolesList = setOf(WerewolfRole(), WerewolfRole(), AngelRole(), WitchRole())
     val gamedef = createGameDefinition(playerList, rolesList)
     log.info { "Exporting state machine" }
-        val exported = gamedef.buildStateMachine(this).exportToPlantUml()
+        val exported = gamedef.buildStateMachine(this).stateMachine.exportToPlantUml()
         log.info { "Export finished" }
         log.info { "Exported: \n$exported" }
     }

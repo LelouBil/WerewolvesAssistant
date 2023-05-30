@@ -1,25 +1,14 @@
 package net.leloubil.common.gamelogic
 
+import net.leloubil.common.gamelogic.roles.BaseRole
+
 
 abstract class PendingKill() {
-    fun consumed(player: Player) {}
 }
 
-class Player(name: String) {
+class Player(val name: String, val role: BaseRole) {
     var alive = true
-        private set
 
-    val pendingKills = mutableListOf<PendingKill>()
-
-    fun appendKill(kill: PendingKill) {
-        pendingKills.add(kill)
-    }
-
-    fun processKills() {
-        pendingKills.firstOrNull()?.let {
-            it.consumed(this)
-            pendingKills.remove(it)
-        }
-    }
+    var pendingKills = mutableListOf<PendingKill>()
 
 }

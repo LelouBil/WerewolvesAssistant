@@ -1,16 +1,16 @@
 package net.leloubil.common.gamelogic.roles
 
-import net.leloubil.common.gamelogic.GameDefinition
-import net.leloubil.common.gamelogic.PendingKill
-import net.leloubil.common.gamelogic.Player
+import net.leloubil.common.gamelogic.*
 import ru.nsk.kstatemachine.*
 import kotlin.reflect.KClass
 
 
 object WerewolvesTeam : Team("Werewolves")
+
 class WerewolfRole : BaseRole("Werewolf") {
-    override val participatesIn: Set<KClass<WerewolvesCall>> = setOf(WerewolvesCall::class)
-    override val winCondition: WinCondition = TeamWinCondition(WerewolvesTeam)
+    override val winTeam = WerewolvesTeam
+    override val participatesIn: Set<KClass<out BaseCall>> = setOf(WerewolvesCall::class)
+    override val overrideStateMachine: (GameStateMachineHolder.() -> Unit)? = null;
 }
 
 class WerewolvesCall(gameDefinition: GameDefinition) : BaseCall(
@@ -28,7 +28,7 @@ class WerewolvesCall(gameDefinition: GameDefinition) : BaseCall(
         }
         werewolvesKill {
             onEntry {
-                data.appendKill(WerewolvesKill())
+                data.pendingKills.add(WerewolvesKill())
             }
         }
     }

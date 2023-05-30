@@ -1,26 +1,26 @@
 package net.leloubil.common.gamelogic.steps
 
 import net.leloubil.common.gamelogic.GameDefinition
-import net.leloubil.common.gamelogic.Player
-import net.leloubil.common.gamelogic.roles.TeamWinCondition
-import net.leloubil.common.gamelogic.roles.WinCondition
 import ru.nsk.kstatemachine.*
 
-typealias PlayerWinConditionPair = Pair<Player,WinCondition>
 
-class CheckWinStep(name: String,gameDefinition: GameDefinition, gameEndState: State, continueState: State) : GameStep(name, gameDefinition) {
+class CheckWinStep(name: String, gameDefinition: GameDefinition, gameEndState: State, continueState: State) :
+    GameStep(name, gameDefinition) {
 
-    init{
+    init {
         onEntry {
-            //todo refactor win
-
+            gameDefinition.playerList.filter { it.alive }.forEach { player ->
+                if(gameDefinition.playerList.filter { it.alive }.all { it.role.winTeam == player.role.winTeam } ){
+                    gameDefinition.winners.add(player.role.winTeam)
+                }
+            }
         }
-        transition<FinishedEvent>("If at least one win condition is met"){
-            guard = { gameDefinition.winFlags.isNotEmpty() }
+        transition<FinishedEvent>("If there is at least one winner") {
+            guard = { gameDefinition.winners.isNotEmpty() }
             targetState = gameEndState
         }
-        transition<FinishedEvent>("If no win condition is met"){
-            guard = { gameDefinition.winFlags.isEmpty() }
+        transition<FinishedEvent>("If there is no winner") {
+            guard = { gameDefinition.winners.isEmpty() }
             targetState = continueState
         }
     }

@@ -4,40 +4,59 @@ import net.leloubil.common.gamelogic.GameDefinition
 import net.leloubil.common.gamelogic.roles.BaseCall
 import net.leloubil.common.gamelogic.roles.WerewolvesCall
 import net.leloubil.common.gamelogic.roles.WitchCall
+import net.leloubil.common.gamelogic.util.StateEditor
 import ru.nsk.kstatemachine.*
+import kotlin.reflect.KClass
 
-val callsOrderBuilder : (GameDefinition) -> List<BaseCall> = {listOf(
-    WerewolvesCall(it),
-    WitchCall(it)
-)}
+val callsOrderBuilder: (GameDefinition) -> List<BaseCall> = {
+    listOf(
+        WerewolvesCall(it),
+        WitchCall(it)
+    )
+}
 
-class Night(gameDefinition: GameDefinition, gameEndState: State) : GameStep("Night", gameDefinition) {
+class Night(gameDefinition: GameDefinition) : GameStep("Night", gameDefinition) {
     init {
         val nightEnd = finalState("Night End")
-        val processKills = addState(ProcessKillsStep("Process Kills Night",gameDefinition))
-        val checkWin = addState((CheckWinStep("Check Win Night",gameDefinition, gameEndState, nightEnd)))
         val callsOrder = callsOrderBuilder(gameDefinition)
         //in reverse
 
-        var lastState : State = processKills
-        callsOrder.reversed().forEach {
-            addState(it){
+        var lastCheck: State = nightEnd
+        var lastCall: State = nightEnd
+        callsOrder.reversed().forEach { call ->
+            val theCall = addState(call) {
                 transition<FinishedEvent> {
-                    targetState = lastState
+                    targetState = lastCheck
                 }
             }
-            lastState = it
-        }
+            val theCheck = state(call.name + " Check") {
+                transition<FinishedEvent>("At least one participant") {
+                    guard = {
+                        gameDefinition.playerList.filter { it.alive }.any {
+                            it.role.participatesIn.contains(call::class)
+                        }
+                    }
+                    targetState = theCall
+                }
 
-        initialState("Night Start"){
-            transition<FinishedEvent> {
-                targetState = callsOrder.first()
+                transition<FinishedEvent>("No participant") {
+                    guard = {
+                        gameDefinition.playerList.filter { it.alive }.none {
+                            it.role.participatesIn.contains(call::class)
+                        }
+                    }
+                    targetState = lastCheck
+                }
             }
+
+            lastCall = theCall
+            lastCheck = theCheck
         }
 
-        processKills{
+        initialState("Night Start")
+        {
             transition<FinishedEvent> {
-                targetState = checkWin
+                targetState = lastCheck
             }
         }
 

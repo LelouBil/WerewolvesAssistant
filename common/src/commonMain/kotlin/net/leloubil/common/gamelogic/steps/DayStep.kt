@@ -3,69 +3,73 @@ package net.leloubil.common.gamelogic.steps
 import net.leloubil.common.gamelogic.GameDefinition
 import net.leloubil.common.gamelogic.PendingKill
 import net.leloubil.common.gamelogic.Player
+import net.leloubil.common.gamelogic.util.StateEditor
 import ru.nsk.kstatemachine.*
 
-class VillagerVoteMayorEvent(override val data: Player) : DataEvent<Player>
 class VillagerVoteKillEvent(override val data: Player) : DataEvent<Player>
-class VillagerKill : PendingKill()
+
+class RevealKillsConfirmedEvent : Event
+class VillagerVoteKill : PendingKill()
 class Day(gameDefinition: GameDefinition, gameEndState: State) : GameStep("Day", gameDefinition) {
 
-    init{
-        val dayStart = initialState("Day Start")
-        val dayEnd = finalState("Day End")
-        val beforeMayorVote = state("Mayor Vote Start")
-        val afterMayorVote = dataState<Player>("Mayor Chosen")
-        val beforeVillagerKillVote = state("Villager Vote Start")
-        val afterVillagerKillVote = dataState<Player>("Villager Killed")
-        val processKillsStep = addState(ProcessKillsStep("Process Kills Day",gameDefinition))
-        val checkWin = addState(CheckWinStep("Check Win Day",gameDefinition,
-            gameEndState = gameEndState,
-            continueState = dayEnd))
+    val processKillsCheckWinEditor: StateEditor<ProcessKillsCheckWin> = StateEditor()
+    val mayorChangeEditor: StateEditor<ChangeMayor> = StateEditor()
+    val dayStart = initialState("Day Start")
+    val mayorChangeStartOfDay = addState(ChangeMayor("Start of Day", gameDefinition).apply { this@Day.mayorChangeEditor})
+    val processNightKills = addState(ProcessKillsCheckWin("Night", gameDefinition, gameEndState, mayorChangeStartOfDay).apply { this@Day.processKillsCheckWinEditor })
+    val beforeVillagerKillVote = state("Villager Vote Start")
+    val afterVillagerKillVote = dataState<Player>("Villager Killed")
+    val ensureMayor = state("Ensure Mayor")
+    val processDayKills = addState(ProcessKillsCheckWin("Day", gameDefinition, gameEndState, ensureMayor).apply { this@Day.processKillsCheckWinEditor })
+    val mayorChangeAfterVote = addState(ChangeMayor("after vote", gameDefinition).apply { this@Day.mayorChangeEditor})
+    val dayEnd = finalState("Day End")
 
+    init {
         dayStart {
-            transition<FinishedEvent>("If mayor is not elected") {
-                guard = { gameDefinition.mayor == null}
-                targetState = beforeMayorVote
-            }
-            transition<FinishedEvent>("If mayor is already elected") {
-                guard = { gameDefinition.mayor != null}
-                targetState = beforeVillagerKillVote
-            }
-        }
-
-        beforeMayorVote{
-            dataTransition<VillagerVoteMayorEvent,Player>("Mayor Vote received") {
-                targetState = afterMayorVote
-            }
-        }
-
-        afterMayorVote{
             onEntry {
-                gameDefinition.mayor = data
+                gameDefinition.dayNumber++
             }
-            transition<FinishedEvent>{
-                targetState = beforeVillagerKillVote
-            }
-        }
-
-        beforeVillagerKillVote{
-            dataTransition<VillagerVoteKillEvent,Player>("Vote for target finished") {
-                targetState = afterVillagerKillVote
+            transition<FinishedEvent> {
+                targetState = this@Day.processNightKills
             }
         }
 
-        afterVillagerKillVote{
+        mayorChangeStartOfDay {
+            transition<FinishedEvent> {
+                targetState =this@Day.beforeVillagerKillVote
+            }
+        }
+
+        beforeVillagerKillVote {
+            dataTransition<VillagerVoteKillEvent, Player>("Vote for target finished") {
+                targetState = this@Day.afterVillagerKillVote
+            }
+        }
+
+        afterVillagerKillVote {
             onEntry {
-                data.appendKill(VillagerKill())
+                data.pendingKills.add(VillagerVoteKill())
             }
-            transition<FinishedEvent>{
-                targetState = processKillsStep
+            transition<FinishedEvent> {
+                targetState = this@Day.processDayKills
             }
         }
 
-        processKillsStep{
-            transition<FinishedEvent>{
-                targetState = checkWin
+        ensureMayor {
+            transition<RevealKillsConfirmedEvent>("Mayor is dead") {
+                guard = { gameDefinition.mayor!!.alive.not() }
+                targetState = this@Day.mayorChangeAfterVote
+            }
+            transition<RevealKillsConfirmedEvent>("Mayor is alive") {
+                guard = { gameDefinition.mayor!!.alive }
+                targetState = this@Day.dayEnd
+            }
+        }
+
+
+        mayorChangeAfterVote {
+            transition<FinishedEvent> {
+                targetState = this@Day.dayEnd
             }
         }
 
