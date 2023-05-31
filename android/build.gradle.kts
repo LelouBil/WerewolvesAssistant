@@ -21,7 +21,7 @@ android {
     compileSdk = 33
     defaultConfig {
         applicationId = "net.leloubil.android"
-        minSdk = 21
+        minSdk = 24
         targetSdk = 33
         versionCode = 1
         versionName = "1.0-SNAPSHOT"
