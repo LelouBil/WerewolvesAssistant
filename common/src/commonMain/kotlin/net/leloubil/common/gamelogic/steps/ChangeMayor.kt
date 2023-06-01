@@ -14,7 +14,7 @@ class ChangeMayor(name: String, gameDefinition: GameDefinition) : GameStep("Chan
         val mayorChanged = finalDataState<Player>("Mayor Changed $name")
 
         beforeChoice {
-            dataTransition<VillagerVoteMayorEvent, Player>("Villagers chose new mayor") { targetState = mayorChanged }
+            dataTransition<VillagerVoteMayorEvent, Player>("A new mayor is chosen $name") { targetState = mayorChanged }
             // undo
             onEntry { transitionParams ->
                 if (transitionParams.unwrappedEvent is UndoEvent) {

@@ -2,6 +2,7 @@ package net.leloubil.common
 
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import io.github.aakira.napier.DebugAntilog
 import io.github.aakira.napier.Napier
 import net.leloubil.common.ui.MyApplicationTheme
 import net.leloubil.common.ui.component.PrimaryButton

@@ -5,7 +5,7 @@ import net.leloubil.common.gamelogic.PendingKill
 import net.leloubil.common.gamelogic.Player
 import ru.nsk.kstatemachine.onEntry
 
-class ProcessKillsStep(name: String, gameDefinition: GameDefinition) : GameStep(name, gameDefinition) {
+class ProcessKillsStep(name: String, gameDefinition: GameDefinition) : SelfContinueGameStep(name, gameDefinition) {
     val killMap: MutableMap<Player, PendingKill> = mutableMapOf()
 
     init {
@@ -21,5 +21,6 @@ class ProcessKillsStep(name: String, gameDefinition: GameDefinition) : GameStep(
                 }
             }
         }
+
     }
 }

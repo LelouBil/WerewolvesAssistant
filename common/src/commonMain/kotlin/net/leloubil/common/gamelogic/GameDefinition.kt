@@ -4,7 +4,7 @@ import kotlinx.coroutines.CoroutineScope
 
 class GameDefinition(val playerList: List<Player>) {
     var mayor: Player? = null
-    lateinit var buildStateMachine: suspend (CoroutineScope) -> GameStateMachineHolder
+    lateinit var stateMachineHolder: GameStateMachineHolder
     val winners = mutableSetOf<Team>()
     var dayNumber: Int = 0
 }

@@ -1,6 +1,7 @@
 package net.leloubil.common.gamelogic.roles
 
 import net.leloubil.common.gamelogic.*
+import net.leloubil.common.gamelogic.steps.GameStep
 import ru.nsk.kstatemachine.*
 import kotlin.reflect.KClass
 
@@ -20,8 +21,10 @@ class WerewolvesCall(gameDefinition: GameDefinition) : BaseCall(
     class WerewolvesKill : PendingKill()
     class WerewolvesVoteEvent(override val data: Player) : DataEvent<Player>
 
+    class BeforeWereWolvesVote(gameDefinition: GameDefinition) : GameStep("Before werewolves vote", gameDefinition)
+
     init {
-        val werewolvesVote = initialState("Start of werewolves vote")
+        val werewolvesVote = addInitialState(BeforeWereWolvesVote(gameDefinition))
         val werewolvesKill = finalDataState<Player>("Werewolves Killed victim")
         werewolvesVote {
             dataTransition<WerewolvesVoteEvent, Player>("Werewolves chose victim") { targetState = werewolvesKill }

@@ -12,13 +12,17 @@ class VillagerVoteKillEvent(override val data: Player) : DataEvent<Player>
 
 class RevealKillsConfirmedEvent : Event
 class VillagerVoteKill : PendingKill()
+
+class DayStartState(gameDefinition: GameDefinition) : GameStep("Day start",gameDefinition)
+class ConfirmDayStartEvent : Event
+
 class Day(gameDefinition: GameDefinition, gameEndState: State) : GameStep("Day", gameDefinition) {
 
 
     val processKillsCheckWinEditor: StateEditor<ProcessKillsCheckWin> = StateEditor()
     val mayorChangeEditor: StateEditor<ChangeMayor> = StateEditor()
-    val ensureMayorBeforeVote = state("Ensure Mayor Before Vote")
-    val dayStart = initialState("Day Start")
+    val ensureMayorBeforeVote = addState(SelfContinueGameStep("Ensure Mayor Before Vote",gameDefinition))
+    val dayStart = addInitialState(DayStartState(gameDefinition))
     val mayorChangeStartOfDay =
         addState(ChangeMayor("Start of Day", gameDefinition).apply { this@Day.mayorChangeEditor })
     val processNightKills = addState(
@@ -48,17 +52,17 @@ class Day(gameDefinition: GameDefinition, gameEndState: State) : GameStep("Day",
             onEntry {
                 gameDefinition.dayNumber++
             }
-            transition<FinishedEvent> {
+            transition<ConfirmDayStartEvent> {
                 targetState = this@Day.processNightKills
             }
         }
 
         ensureMayorBeforeVote {
-            transition<FinishedEvent>("If turn 1 or mayor is dead") {
+            selfContinuation("If turn 1 or mayor is dead") {
                 guard = { gameDefinition.dayNumber == 1 || !(gameDefinition.mayor?.alive ?: false) }
                 targetState = this@Day.mayorChangeStartOfDay
             }
-            transition<FinishedEvent>("If mayor is alive") {
+            selfContinuation("If mayor is alive") {
                 guard = { gameDefinition.mayor?.alive ?: false }
                 targetState = this@Day.beforeVillagerKillVote
             }

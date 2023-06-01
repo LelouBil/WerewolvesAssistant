@@ -12,8 +12,8 @@ val callOrder: List<Pair<KClass<out BaseCall>, (GameDefinition) -> BaseCall>> =
         Pair(WerewolvesCall::class, ::WerewolvesCall),
         Pair(WitchCall::class, ::WitchCall)
     )
-
-
+class CheckState(name: String, gameDefinition: GameDefinition) : SelfContinueGameStep(name, gameDefinition)
+class ConfirmNightStartEvent : Event
 class Night(gameDefinition: GameDefinition) : GameStep("Night", gameDefinition) {
     init {
         val nightEnd = finalState("Night End")
@@ -31,8 +31,8 @@ class Night(gameDefinition: GameDefinition) : GameStep("Night", gameDefinition) 
                         targetState = lastCheck
                     }
                 }
-                val theCheck = state(call.name + " Check") {
-                    transition<FinishedEvent>("At least one participant") {
+                val theCheck = addState(CheckState(call.name + " Check",gameDefinition)) {
+                    selfContinuation("At least one participant") {
                         guard = {
                             gameDefinition.playerList.filter { it.alive }.any {
                                 it.role.participatesIn.contains(call::class)
@@ -40,8 +40,7 @@ class Night(gameDefinition: GameDefinition) : GameStep("Night", gameDefinition) 
                         }
                         targetState = theCall
                     }
-
-                    transition<FinishedEvent>("No participant") {
+                    selfContinuation("No participant") {
                         guard = {
                             gameDefinition.playerList.filter { it.alive }.none {
                                 it.role.participatesIn.contains(call::class)
@@ -55,13 +54,16 @@ class Night(gameDefinition: GameDefinition) : GameStep("Night", gameDefinition) 
                 lastCheck = theCheck
             }
 
-        initialState("Night Start")
+        addInitialState(NightStartState(gameDefinition))
         {
-            transition<FinishedEvent> {
+            transition<ConfirmNightStartEvent> {
                 targetState = lastCheck
             }
         }
 
 
     }
+}
+
+class NightStartState(gameDefinition: GameDefinition) : GameStep("Night Start", gameDefinition) {
 }

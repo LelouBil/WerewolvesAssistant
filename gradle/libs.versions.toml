@@ -16,6 +16,7 @@ junit5 = { module = "org.junit.jupiter:junit-jupiter-api", version = "5.9.3" }
 kstatemachine = { module = "io.github.nsk90:kstatemachine", version.ref = "kstatemachine" }
 kstatemachine-coroutines = { module = "io.github.nsk90:kstatemachine-coroutines", version.ref = "kstatemachine" }
 logging = { module = "io.github.aakira:napier", version = "2.6.1"}
+mordant = { module = "com.github.ajalt.mordant:mordant", version = "2.0.0-beta13" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 
 # android

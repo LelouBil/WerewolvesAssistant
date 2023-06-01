@@ -8,7 +8,7 @@ import ru.nsk.kstatemachine.transition
 
 
 class CheckWinStep(name: String, gameDefinition: GameDefinition, gameEndState: State, continueState: State) :
-    GameStep(name, gameDefinition) {
+    SelfContinueGameStep(name, gameDefinition) {
 
     init {
         onEntry {
@@ -18,11 +18,11 @@ class CheckWinStep(name: String, gameDefinition: GameDefinition, gameEndState: S
                 }
             }
         }
-        transition<FinishedEvent>("If there is at least one winner") {
+        selfContinuation("If there is at least one winner $name") {
             guard = { gameDefinition.winners.isNotEmpty() }
             targetState = gameEndState
         }
-        transition<FinishedEvent>("If there is no winner") {
+        selfContinuation("If there is no winner $name") {
             guard = { gameDefinition.winners.isEmpty() }
             targetState = continueState
         }

@@ -21,10 +21,11 @@ kotlin {
                 api(compose.runtime)
                 api(compose.foundation)
                 api(compose.material)
+                api(libs.logging)
                 implementation(libs.kotlin.reflect)
                 implementation(libs.kstatemachine)
                 implementation(libs.kstatemachine.coroutines)
-                api(libs.logging)
+                implementation(libs.mordant)
                 implementation(kotlin("reflect"))
             }
         }
@@ -62,6 +63,7 @@ kotlin {
 }
 
 tasks.named<Test>("desktopTest") {
+    outputs.upToDateWhen { false }
     useJUnitPlatform()
     filter {
         isFailOnNoMatchingTests = false
@@ -81,7 +83,7 @@ android {
     compileSdk = 33
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     defaultConfig {
-        minSdk = 24
+        minSdk = 26
         @Suppress("UnstableApiUsage")
         targetSdk = 33
     }
