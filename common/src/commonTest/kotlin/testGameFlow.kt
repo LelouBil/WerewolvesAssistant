@@ -7,6 +7,7 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import net.leloubil.common.gamelogic.GameDefinition
+import net.leloubil.common.gamelogic.Player
 import net.leloubil.common.gamelogic.Team
 import net.leloubil.common.gamelogic.createGameDefinition
 import net.leloubil.common.gamelogic.roles.BaseRole
@@ -23,6 +24,7 @@ class ResponseToStep(val stateType: KClass<*>, val eventToSend: (IState.() -> Ev
 class GameStepsScope(val gameDefinition: GameDefinition) {
     val steps = ArrayDeque<ResponseToStep>()
     var winners: Set<Team>? = null
+    val players = gameDefinition.playerList
 
     inline fun <reified T : GameStep> respondTo(noinline eventToSend: T.() -> Event) {
         withClue("There shouldn't be any calls to respondTo in the game flow test after the game is finished") {
@@ -39,6 +41,12 @@ class GameStepsScope(val gameDefinition: GameDefinition) {
     fun winners(vararg winners: Team) {
         this.winners = winners.toSet()
     }
+
+    fun List<Player>.living() = filter { it.alive }
+
+    fun List<Player>.dead() = filter { !it.alive }
+
+    inline fun <reified T : BaseRole> List<Player>.role() = filter { it.role is T }
 
 }
 
@@ -57,10 +65,8 @@ public suspend fun TestScope.testGameFlow(vararg roleList: BaseRole, gameSteps: 
     stateMachineHolder.stateMachine.addListener(object : StateMachine.Listener {
 
 
-
         override suspend fun onStateFinished(state: IState, transitionParams: TransitionParams<*>) {
-            if(state is StateMachine)
-            {
+            if (state is StateMachine) {
                 reachedEnd = true
             }
         }

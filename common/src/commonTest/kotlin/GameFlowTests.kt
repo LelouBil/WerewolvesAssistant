@@ -1,17 +1,9 @@
-import io.github.aakira.napier.DebugAntilog
-import io.github.aakira.napier.Napier
 import io.kotest.assertions.fail
-import io.kotest.assertions.withClue
-import io.kotest.core.NamedTag
 import io.kotest.core.annotation.Tags
-import io.kotest.core.extensions.RuntimeTagExpressionExtension
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.core.spec.style.WordSpec
-import io.kotest.matchers.types.shouldBeTypeOf
-import kotlinx.coroutines.runBlocking
-import net.leloubil.common.CustomAntiLog
+import io.kotest.matchers.shouldBe
 import net.leloubil.common.gamelogic.ConfirmRolesEvent
-import net.leloubil.common.gamelogic.GameEndState
 import net.leloubil.common.gamelogic.ShowRolesState
 import net.leloubil.common.gamelogic.createGameDefinition
 import net.leloubil.common.gamelogic.roles.VillagerRole
@@ -19,28 +11,23 @@ import net.leloubil.common.gamelogic.roles.WerewolfRole
 import net.leloubil.common.gamelogic.roles.WerewolvesCall
 import net.leloubil.common.gamelogic.roles.WerewolvesTeam
 import net.leloubil.common.gamelogic.steps.*
-import ru.nsk.kstatemachine.IState
-import ru.nsk.kstatemachine.StateMachine
 
 
-
-@Tags("focus")
-class TestTests : FunSpec({
-    test("testGameFlowTest"){
-        testGameFlow(VillagerRole(), WerewolfRole()) {
-            respondTo<ShowRolesState>(ConfirmRolesEvent())
-            respondTo<NightStartState>(ConfirmNightStartEvent())
-            respondTo<WerewolvesCall.BeforeWereWolvesVote>(WerewolvesCall.WerewolvesVoteEvent(gameDefinition.playerList[0]))
-            respondTo<DayStartState>(ConfirmDayStartEvent())
-            winners(WerewolvesTeam)
-        }
-    }
-})
 class GameFlowTests : WordSpec({
 
     "The day number" When {
         "the first night ends" should {
             "be 1" {
+                testGameFlow(VillagerRole(), WerewolfRole()) {
+                    respondTo<ShowRolesState>(ConfirmRolesEvent())
+                    respondTo<NightStartState>(ConfirmNightStartEvent())
+                    respondTo<WerewolvesCall.BeforeWereWolvesVote>(WerewolvesCall.WerewolvesVoteEvent(players.living().role<VillagerRole>().first()))
+                    respondTo<DayStartState> {
+                        gameDefinition.dayNumber shouldBe 1
+                        ConfirmDayStartEvent()
+                    }
+                    winners(WerewolvesTeam)
+                }
             }
         }
         "the second night ends" should {
