@@ -9,3 +9,4 @@ import androidx.compose.ui.graphics.Color
 
 val Dark = Color(103, 16, 12)
 val Background = Color(255, 239, 188)
+val NightBlue = Color(20, 25, 45)

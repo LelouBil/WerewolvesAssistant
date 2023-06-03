@@ -18,8 +18,23 @@ private val Acme = FontFamily(
     )
 )
 
+private val Boogaloo = FontFamily(
+    listOf(
+        Font(
+            resource = "/font/Boogaloo-Regular.ttf",
+            weight = FontWeight.Normal,
+            style = FontStyle.Normal
+        )
+    )
+)
+
 // Set of Material typography styles to start with
 val Typography = Typography(
+    h1 = TextStyle(
+        fontFamily = Boogaloo,
+        fontWeight = FontWeight.Bold,
+        fontSize = 36.sp
+    ),
     body1 = TextStyle(
         fontFamily = Acme,
         fontWeight = FontWeight.Normal,
