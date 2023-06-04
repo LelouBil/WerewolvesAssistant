@@ -1,14 +1,14 @@
-package net.leloubil.common.gamelogic.steps
+package net.leloubil.common.gamelogic.steps.win
 
 import net.leloubil.common.gamelogic.GameDefinition
-import ru.nsk.kstatemachine.FinishedEvent
+import net.leloubil.common.gamelogic.steps.SelfContinueDefaultStep
+import net.leloubil.common.gamelogic.steps.selfContinuation
 import ru.nsk.kstatemachine.State
 import ru.nsk.kstatemachine.onEntry
-import ru.nsk.kstatemachine.transition
 
 
-class CheckWinStep(name: String, gameDefinition: GameDefinition, gameEndState: State, continueState: State) :
-    SelfContinueGameStep(name, gameDefinition) {
+open class CheckWinStep(name: String, gameDefinition: GameDefinition, gameEndState: State, continueState: State) :
+    SelfContinueDefaultStep(name, gameDefinition) {
 
     init {
         onEntry {

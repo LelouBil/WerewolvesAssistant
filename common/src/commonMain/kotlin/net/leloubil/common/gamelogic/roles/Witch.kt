@@ -1,15 +1,14 @@
 package net.leloubil.common.gamelogic.roles
 
 import net.leloubil.common.gamelogic.GameDefinition
-import net.leloubil.common.gamelogic.GameStateMachineHolder
 import net.leloubil.common.gamelogic.PendingKill
 import net.leloubil.common.gamelogic.Player
 import ru.nsk.kstatemachine.*
 import kotlin.reflect.KClass
 
-class WitchRole : VillagerRole("Witch") {
+class WitchRole : VillagerRole() {
     override val participatesIn: Set<KClass<WitchCall>> = setOf(WitchCall::class)
-    override val overrideStateMachine: (GameStateMachineHolder.() -> Unit)? = null
+    override val overrideStateMachine: (StateMachine.() -> Unit)? = null
     var hasHeal = true
     var hasKill = true
 }
@@ -47,17 +46,15 @@ class WitchCall(gameDefinition: GameDefinition) : BaseCall(
             }
         }
 
-
         witchHeal {
             onEntry {
-                val wolvesKill = data.pendingKills.single { it is WerewolvesCall.WerewolvesKill }
-                data.pendingKills.remove(wolvesKill)
+                data.removePendingKill(WerewolvesKill::class)
                 witch.hasHeal = false
             }
         }
         witchKill {
             onEntry {
-                data.pendingKills.add(WitchKill())
+                data.addPendingKill(WitchKill())
                 witch.hasKill = false
             }
         }

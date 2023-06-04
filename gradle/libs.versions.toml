@@ -11,6 +11,8 @@ kotest-framework-engine = { module = "io.kotest:kotest-framework-engine", versio
 kotest-framework-datatest = { module = "io.kotest:kotest-framework-datatest", version.ref = "kotest" }
 kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
 junit5 = { module = "org.junit.jupiter:junit-jupiter-api", version = "5.9.3" }
+mockk = { module = "io.mockk:mockk", version = "1.13.5" }
+
 
 # common
 kstatemachine = { module = "io.github.nsk90:kstatemachine", version.ref = "kstatemachine" }

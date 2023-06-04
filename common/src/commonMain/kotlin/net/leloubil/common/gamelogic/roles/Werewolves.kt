@@ -1,37 +1,36 @@
 package net.leloubil.common.gamelogic.roles
 
 import net.leloubil.common.gamelogic.*
-import net.leloubil.common.gamelogic.steps.GameStep
 import ru.nsk.kstatemachine.*
 import kotlin.reflect.KClass
 
 
-object WerewolvesTeam : Team("Werewolves")
+object WerewolvesTeam : Team()
 
-class WerewolfRole : BaseRole("Werewolf") {
+class WerewolvesKill : PendingKill()
+class WerewolfRole : BaseRole() {
     override val winTeam = WerewolvesTeam
     override val participatesIn: Set<KClass<out BaseCall>> = setOf(WerewolvesCall::class)
-    override val overrideStateMachine: (GameStateMachineHolder.() -> Unit)? = null
+    override val overrideStateMachine: (StateMachine.() -> Unit)? = null
 }
 
 class WerewolvesCall(gameDefinition: GameDefinition) : BaseCall(
     gameDefinition,
     name = "Werewolves Call"
 ) {
-    class WerewolvesKill : PendingKill()
-    class WerewolvesVoteEvent(override val data: Player) : DataEvent<Player>
-
-    class BeforeWereWolvesVote(gameDefinition: GameDefinition) : GameStep("Before werewolves vote", gameDefinition)
+    inner class BeforeWereWolvesVote : DefaultState("Before werewolves vote"){
+        inner class WerewolvesVoteEvent(override val data: Player) : DataEvent<Player>
+    }
 
     init {
-        val werewolvesVote = addInitialState(BeforeWereWolvesVote(gameDefinition))
+        val werewolvesVote = addInitialState(BeforeWereWolvesVote())
         val werewolvesKill = finalDataState<Player>("Werewolves Killed victim")
         werewolvesVote {
-            dataTransition<WerewolvesVoteEvent, Player>("Werewolves chose victim") { targetState = werewolvesKill }
+            dataTransition<BeforeWereWolvesVote.WerewolvesVoteEvent, Player>("Werewolves chose victim") { targetState = werewolvesKill }
         }
         werewolvesKill {
             onEntry {
-                data.pendingKills.add(WerewolvesKill())
+                data.addPendingKill(WerewolvesKill())
             }
         }
     }

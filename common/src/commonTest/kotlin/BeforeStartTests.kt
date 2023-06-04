@@ -1,9 +1,7 @@
-import io.github.aakira.napier.Napier
 import io.kotest.assertions.throwables.shouldThrowExactly
 import io.kotest.core.spec.style.WordSpec
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
-import net.leloubil.common.CustomAntiLog
 import net.leloubil.common.gamelogic.createGameDefinition
 import net.leloubil.common.gamelogic.roles.VillagerRole
 
@@ -33,8 +31,7 @@ class BeforeStartTests : WordSpec({
             val playerList = listOf("1", "2", "3", "4")
             val rolesList = setOf(VillagerRole(), VillagerRole(), VillagerRole(), VillagerRole())
             val gameDef = createGameDefinition(this, playerList, rolesList)
-            val holder = gameDef.stateMachineHolder
-            holder.stateMachine.isRunning shouldBe false
+            gameDef.stateMachine.isRunning shouldBe false
 
         }
     }
@@ -50,6 +47,4 @@ class BeforeStartTests : WordSpec({
         }
 
     }
-
-
 })

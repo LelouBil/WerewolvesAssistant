@@ -12,9 +12,9 @@ val callOrder: List<Pair<KClass<out BaseCall>, (GameDefinition) -> BaseCall>> =
         Pair(WerewolvesCall::class, ::WerewolvesCall),
         Pair(WitchCall::class, ::WitchCall)
     )
-class CheckState(name: String, gameDefinition: GameDefinition) : SelfContinueGameStep(name, gameDefinition)
+class CheckState(name: String, gameDefinition: GameDefinition) : SelfContinueDefaultStep(name, gameDefinition)
 class ConfirmNightStartEvent : Event
-class Night(gameDefinition: GameDefinition) : GameStep("Night", gameDefinition) {
+class Night(gameDefinition: GameDefinition) : DefaultState("Night") {
     init {
         val nightEnd = finalState("Night End")
         val callsOrder = callOrder
@@ -23,7 +23,6 @@ class Night(gameDefinition: GameDefinition) : GameStep("Night", gameDefinition) 
         //in reverse
 
         var lastCheck: State = nightEnd
-        var lastCall: State = nightEnd
         callsOrder.reversed()
             .forEach { call ->
                 val theCall = addState(call) {
@@ -49,12 +48,10 @@ class Night(gameDefinition: GameDefinition) : GameStep("Night", gameDefinition) 
                         targetState = lastCheck
                     }
                 }
-
-                lastCall = theCall
                 lastCheck = theCheck
             }
 
-        addInitialState(NightStartState(gameDefinition))
+        addInitialState(NightStartState())
         {
             transition<ConfirmNightStartEvent> {
                 targetState = lastCheck
@@ -65,5 +62,5 @@ class Night(gameDefinition: GameDefinition) : GameStep("Night", gameDefinition) 
     }
 }
 
-class NightStartState(gameDefinition: GameDefinition) : GameStep("Night Start", gameDefinition) {
+class NightStartState : DefaultState("Night Start") {
 }
