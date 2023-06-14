@@ -14,10 +14,10 @@ class AngelRole : BaseRole() {
     override val winTeam: Team = AngelTeam
     override val overrideStateMachine: (StateMachine.() -> Unit) = {
         editState(ProcessKillsCheckWin.ProcessKillsStepPart::class) {
-            onEntry {
+            action {
                 val angelPlayer = gameDefinition.playerList.first { it.role == this@AngelRole }
                 if (killMap.containsKey(angelPlayer) && killMap[angelPlayer] is VillagerVoteKill && gameDefinition.dayNumber == 1) {
-                    gameDefinition.winners.add(AngelTeam)
+                    gameDefinition::winners undoAssign gameDefinition.winners + AngelTeam
                 }
             }
         }

@@ -1,6 +1,6 @@
 package net.leloubil.common.gamelogic.roles
 
-import net.leloubil.common.gamelogic.GameDefinition
+import net.leloubil.common.gamelogic.MutableGameDefinition
 import net.leloubil.common.gamelogic.Team
 import ru.nsk.kstatemachine.DefaultState
 import ru.nsk.kstatemachine.IState
@@ -23,6 +23,6 @@ abstract class BaseRole() {
 
 
 abstract class BaseCall(
-    protected val gameDefinition: GameDefinition,
+    protected val gameDefinition: MutableGameDefinition,
     name: String
 ) : DefaultState(name)

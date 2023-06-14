@@ -2,7 +2,7 @@
 kotlin = "1.8.20"
 kotest = "5.6.2"
 kstatemachine = "0.22.1"
-
+decompose = "2.0.0-beta-01"
 [libraries]
 # tests
 kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
@@ -17,9 +17,11 @@ mockk = { module = "io.mockk:mockk", version = "1.13.5" }
 # common
 kstatemachine = { module = "io.github.nsk90:kstatemachine", version.ref = "kstatemachine" }
 kstatemachine-coroutines = { module = "io.github.nsk90:kstatemachine-coroutines", version.ref = "kstatemachine" }
-logging = { module = "io.github.aakira:napier", version = "2.6.1"}
+logging = { module = "io.github.aakira:napier", version = "2.6.1" }
 mordant = { module = "com.github.ajalt.mordant:mordant", version = "2.0.0-beta13" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+decompose = { module = "com.arkivanov.decompose:decompose", version.ref = "decompose" }
+decompose-extensions-jetbrains = { module = "com.arkivanov.decompose:extensions-compose-jetbrains", version.ref = "decompose" }
 
 # android
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version = "1.6.1" }

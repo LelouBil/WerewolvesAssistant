@@ -2,6 +2,7 @@
 
 package net.leloubil.common.gamelogic
 
+import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import net.leloubil.common.gamelogic.roles.BaseRole
 import net.leloubil.common.gamelogic.steps.Night
@@ -11,24 +12,64 @@ import ru.nsk.kstatemachine.*
 class GameEndState() : DefaultFinalState("Game Ended")
 
 
-class ShowRolesState(gameDefinition: GameDefinition) : DefaultState("Show roles") {
-    val playerRoleList: MutableList<Pair<String, BaseRole>> = mutableListOf()
+class ShowRolesState(gameDefinition: MutableGameDefinition) : ActionableDefaultStep("Show roles", gameDefinition) {
+    var playerRoleList: List<Pair<String, BaseRole>> = listOf()
+        private set
 
     inner class ConfirmRolesEvent : Event
 
     init {
         onEntry {
-            playerRoleList.clear()
-            playerRoleList.addAll(gameDefinition.playerList.map { it.name to it.role })
+            machine.processEvent(QueueUndoEventHandler.FinishedUndoEvent)
+        }
+        action {
+            ::playerRoleList undoAssign gameDefinition.playerList.map { it.name to it.role }
         }
     }
 }
 
 
+class QueueUndoEventHandler(private val machine: StateMachine,private val gameDef: MutableGameDefinition) : QueuePendingEventHandler {
+    public object FinishedUndoEvent : Event
+
+    private val queue = ArrayDeque<EventAndArgument<*>>()
+
+
+
+    override suspend fun checkEmpty() = check(queue.isEmpty()) { "Event queue is not empty, internal error" }
+
+    override suspend fun onPendingEvent(eventAndArgument: EventAndArgument<*>) {
+
+        if(gameDef.isUndoing){
+            if(eventAndArgument.event is FinishedUndoEvent){
+                machine.log { "Undo finished" }
+                gameDef.isUndoing = false
+            }
+            return
+        }
+        else if (eventAndArgument.event is UndoEvent) {
+            machine.log {
+                "Undo starting"
+            }
+            gameDef.isUndoing = true
+            return
+        }
+        machine.log {
+            "$machine queued event ${eventAndArgument.event::class.simpleName} with argument ${eventAndArgument.argument}"
+        }
+        queue.add(eventAndArgument)
+    }
+
+    override suspend fun nextEventAndArgument() =
+        if (gameDef.isUndoing) EventAndArgument(UndoEvent, null) else queue.removeFirstOrNull()
+
+    override suspend fun clear() = queue.clear()
+}
+
 suspend fun createStateMachine(
     scope: CoroutineScope,
     rolesList: Set<BaseRole>,
-    gameDefinition: GameDefinition
+    gameDefinition: MutableGameDefinition
 ): StateMachine = createStateMachine(
     scope = scope,
     name = "Game State Machine",
@@ -36,7 +77,23 @@ suspend fun createStateMachine(
     doNotThrowOnMultipleTransitionsMatch = false,
     start = false
 ) {
-    //            logger = StateMachine.Logger { lazyMessage -> Napier.i(tag ="StateMachine") { lazyMessage() } }
+    logger = StateMachine.Logger { lazyMessage -> Napier.i(tag = "StateMachine") { lazyMessage() } }
+    pendingEventHandler = QueueUndoEventHandler(this, gameDefinition)
+    addListener(object : StateMachine.Listener {
+        override suspend fun onStateExit(state: IState, transitionParams: TransitionParams<*>) {
+            if (gameDefinition.isUndoing) {
+                when (state) {
+                    is ActionableDefaultStep -> {
+                        state.doUndo()
+                    }
+
+                    is ActionableDataStep<*> -> {
+                        state.doUndo()
+                    }
+                }
+            }
+        }
+    })
     val showRolesState = addInitialState(ShowRolesState(gameDefinition))
     val gameEndState = addFinalState(GameEndState())
     val day = addState(Day(gameDefinition, gameEndState))
@@ -70,7 +127,7 @@ suspend fun createGameDefinition(
     scope: CoroutineScope,
     playerNamesList: List<String>,
     rolesList: Set<BaseRole>
-): GameDefinition {
+): ReadOnlyGameDefinition {
 
     if (rolesList.size < playerNamesList.size) {
         throw IllegalArgumentException("Not enough players for the given roles")
@@ -78,7 +135,7 @@ suspend fun createGameDefinition(
 
     val playerList: List<Player> =
         playerNamesList.shuffled().zip(rolesList.shuffled()).map { Player(it.first, it.second) }
-    val gameDefinition = GameDefinition(playerList)
+    val gameDefinition = MutableGameDefinition(playerList)
     gameDefinition.stateMachine = createStateMachine(scope, rolesList, gameDefinition)
     return gameDefinition
 }

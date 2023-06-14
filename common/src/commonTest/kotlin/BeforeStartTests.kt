@@ -4,8 +4,19 @@ import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import net.leloubil.common.gamelogic.createGameDefinition
 import net.leloubil.common.gamelogic.roles.VillagerRole
+import net.leloubil.common.gamelogic.roles.WerewolfRole
+import ru.nsk.kstatemachine.visitors.exportToPlantUml
 
 class BeforeStartTests : WordSpec({
+
+    "The statemachine" should {
+        "Generate a graph"{
+            val playerList = listOf("1", "2", "3", "4")
+            val rolesList = setOf(VillagerRole(), VillagerRole(), WerewolfRole(), VillagerRole())
+            val gameDef = createGameDefinition(this, playerList, rolesList)
+            println(gameDef.stateMachine.exportToPlantUml())
+        }
+    }
 
     "The creation of the game definition" should {
         "Keep the names given in parameters for each player" {

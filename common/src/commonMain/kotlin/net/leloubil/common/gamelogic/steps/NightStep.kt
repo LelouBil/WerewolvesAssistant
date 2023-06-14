@@ -1,20 +1,21 @@
 package net.leloubil.common.gamelogic.steps
 
-import net.leloubil.common.gamelogic.GameDefinition
+import net.leloubil.common.gamelogic.MutableGameDefinition
+import net.leloubil.common.gamelogic.QueueUndoEventHandler
 import net.leloubil.common.gamelogic.roles.BaseCall
 import net.leloubil.common.gamelogic.roles.WerewolvesCall
 import net.leloubil.common.gamelogic.roles.WitchCall
 import ru.nsk.kstatemachine.*
 import kotlin.reflect.KClass
 
-val callOrder: List<Pair<KClass<out BaseCall>, (GameDefinition) -> BaseCall>> =
+val callOrder: List<Pair<KClass<out BaseCall>, (MutableGameDefinition) -> BaseCall>> =
     listOf(
         Pair(WerewolvesCall::class, ::WerewolvesCall),
         Pair(WitchCall::class, ::WitchCall)
     )
-class CheckState(name: String, gameDefinition: GameDefinition) : SelfContinueDefaultStep(name, gameDefinition)
+class CheckState(name: String, gameDefinition: MutableGameDefinition) : SelfContinueDefaultStep(name, gameDefinition)
 class ConfirmNightStartEvent : Event
-class Night(gameDefinition: GameDefinition) : DefaultState("Night") {
+class Night(gameDefinition: MutableGameDefinition) : DefaultState("Night") {
     init {
         val nightEnd = finalState("Night End")
         val callsOrder = callOrder
@@ -63,4 +64,9 @@ class Night(gameDefinition: GameDefinition) : DefaultState("Night") {
 }
 
 class NightStartState : DefaultState("Night Start") {
+    init{
+        onEntry {
+            machine.processEvent(QueueUndoEventHandler.FinishedUndoEvent)
+        }
+    }
 }

@@ -1,20 +1,19 @@
 package net.leloubil.common.gamelogic.steps.win
 
-import net.leloubil.common.gamelogic.GameDefinition
+import net.leloubil.common.gamelogic.MutableGameDefinition
 import net.leloubil.common.gamelogic.steps.SelfContinueDefaultStep
 import net.leloubil.common.gamelogic.steps.selfContinuation
 import ru.nsk.kstatemachine.State
-import ru.nsk.kstatemachine.onEntry
 
 
-open class CheckWinStep(name: String, gameDefinition: GameDefinition, gameEndState: State, continueState: State) :
+open class CheckWinStep(name: String, gameDefinition: MutableGameDefinition, gameEndState: State, continueState: State) :
     SelfContinueDefaultStep(name, gameDefinition) {
 
     init {
-        onEntry {
+        action {
             gameDefinition.playerList.filter { it.alive }.forEach { player ->
                 if (gameDefinition.playerList.filter { it.alive }.all { it.role.winTeam == player.role.winTeam }) {
-                    gameDefinition.winners.add(player.role.winTeam)
+                    gameDefinition::winners undoAssign gameDefinition.winners + player.role.winTeam
                 }
             }
         }

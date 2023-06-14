@@ -1,6 +1,8 @@
 package net.leloubil.common.gamelogic.roles
 
 import net.leloubil.common.gamelogic.*
+import net.leloubil.common.gamelogic.steps.SelfContinueDataStep
+import net.leloubil.common.gamelogic.steps.selfContinuation
 import ru.nsk.kstatemachine.*
 import kotlin.reflect.KClass
 
@@ -14,23 +16,33 @@ class WerewolfRole : BaseRole() {
     override val overrideStateMachine: (StateMachine.() -> Unit)? = null
 }
 
-class WerewolvesCall(gameDefinition: GameDefinition) : BaseCall(
+class WerewolvesCall(gameDefinition: MutableGameDefinition) : BaseCall(
     gameDefinition,
     name = "Werewolves Call"
 ) {
     inner class BeforeWereWolvesVote : DefaultState("Before werewolves vote"){
         inner class WerewolvesVoteEvent(override val data: Player) : DataEvent<Player>
+        init{
+            onEntry {
+                machine.processEvent(QueueUndoEventHandler.FinishedUndoEvent)
+            }
+        }
     }
+    inner class WerewolvesKillState : SelfContinueDataStep<Player>("Werewolves kill victim", gameDefinition, dataExtractor = defaultDataExtractor())
 
     init {
         val werewolvesVote = addInitialState(BeforeWereWolvesVote())
-        val werewolvesKill = finalDataState<Player>("Werewolves Killed victim")
+        val werewolvesKill = addState(WerewolvesKillState())
+        val werewolvesEnd = finalState("Werewolves finished")
         werewolvesVote {
             dataTransition<BeforeWereWolvesVote.WerewolvesVoteEvent, Player>("Werewolves chose victim") { targetState = werewolvesKill }
         }
         werewolvesKill {
-            onEntry {
-                data.addPendingKill(WerewolvesKill())
+            action {
+                data.addPendingKill(this,WerewolvesKill())
+            }
+            selfContinuation {
+                targetState = werewolvesEnd
             }
         }
     }

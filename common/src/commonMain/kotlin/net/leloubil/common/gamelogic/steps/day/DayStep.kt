@@ -1,16 +1,21 @@
 package net.leloubil.common.gamelogic.steps.day
 
-import net.leloubil.common.gamelogic.GameDefinition
+import net.leloubil.common.gamelogic.ActionableDefaultStep
+import net.leloubil.common.gamelogic.MutableGameDefinition
+import net.leloubil.common.gamelogic.QueueUndoEventHandler
 import net.leloubil.common.gamelogic.steps.win.ProcessKillsCheckWin
 import ru.nsk.kstatemachine.*
 
 
-class Day(private val gameDefinition: GameDefinition, private val gameEndState: State) : DefaultState("Day") {
-    inner class StartState : DefaultState("Day start") {
+class Day(private val gameDefinition: MutableGameDefinition, private val gameEndState: State) : DefaultState("Day") {
+    inner class StartState : ActionableDefaultStep("Day start", gameDefinition) {
         inner class ConfirmEvent : Event
 
         init {
-            onEntry { this@Day.gameDefinition.dayNumber++ }
+            onEntry {
+                machine.processEvent(QueueUndoEventHandler.FinishedUndoEvent)
+            }
+            action { this@Day.gameDefinition::dayNumber undoAssign this@Day.gameDefinition.dayNumber + 1 }
         }
     }
 

@@ -1,8 +1,11 @@
 package net.leloubil.common.gamelogic.roles
 
-import net.leloubil.common.gamelogic.GameDefinition
+import net.leloubil.common.gamelogic.MutableGameDefinition
 import net.leloubil.common.gamelogic.PendingKill
 import net.leloubil.common.gamelogic.Player
+import net.leloubil.common.gamelogic.steps.SelfContinueDataStep
+import net.leloubil.common.gamelogic.steps.SelfContinueDefaultStep
+import net.leloubil.common.gamelogic.steps.selfContinuation
 import ru.nsk.kstatemachine.*
 import kotlin.reflect.KClass
 
@@ -13,49 +16,67 @@ class WitchRole : VillagerRole() {
     var hasKill = true
 }
 
-class WitchCall(gameDefinition: GameDefinition) : BaseCall(
+class WitchCall(gameDefinition: MutableGameDefinition) : BaseCall(
     gameDefinition,
     name = "Witch Call"
 ) {
     class WitchKill : PendingKill()
-    class WitchHealEvent(override val data: Player) : DataEvent<Player>
-    class WitchKillEvent(override val data: Player) : DataEvent<Player>
-    class WitchDoNothingEvent : Event
+
+    inner class BeforeWitchChoiceState : DefaultState("Before Witch choose") {
+        inner class WitchHealEvent(override val data: Player) : DataEvent<Player>
+        inner class WitchKillEvent(override val data: Player) : DataEvent<Player>
+        inner class WitchDoNothingEvent : Event
+    }
+
+    inner class WitchHealState :
+        SelfContinueDataStep<Player>("WitchHeal", gameDefinition, dataExtractor = defaultDataExtractor())
+
+    inner class WitchKillState :
+        SelfContinueDataStep<Player>("WitchKill", gameDefinition, dataExtractor = defaultDataExtractor())
+
+    inner class WitchDoNothingState : SelfContinueDefaultStep("WitchDoNothing", gameDefinition)
 
     init {
         val witch = this.gameDefinition.playerList.single { it.role is WitchRole }.role as WitchRole
 
         val beforeWitchChoice = initialState("Before Witch choose")
 
-        val witchHeal = finalDataState<Player>("WitchHeal")
-        val witchKill = finalDataState<Player>("WitchKill")
-        val doNothing = finalState("WitchDoNothing")
+        val witchHeal = addState(WitchHealState())
+        val witchKill = addState(WitchKillState())
+        val doNothing = addState(WitchDoNothingState())
+        val finished = finalState("WitchFinished")
 
 
         beforeWitchChoice {
-            dataTransition<WitchHealEvent, Player>("If witch has heal and wants to use it") {
+            dataTransition<BeforeWitchChoiceState.WitchHealEvent, Player>("If witch has heal and wants to use it") {
                 guard = { witch.hasHeal }
                 targetState = witchHeal
             }
-            dataTransition<WitchKillEvent, Player>("If witch has kill and wants to use it") {
+            dataTransition<BeforeWitchChoiceState.WitchKillEvent, Player>("If witch has kill and wants to use it") {
                 guard = { witch.hasKill }
                 targetState = witchKill
             }
-            transition<WitchDoNothingEvent>("if witch can't do anything, or chooses to do nothing") {
+            transition<BeforeWitchChoiceState.WitchDoNothingEvent>("if witch can't do anything, or chooses to do nothing") {
                 targetState = doNothing
             }
         }
 
         witchHeal {
-            onEntry {
-                data.removePendingKill(WerewolvesKill::class)
-                witch.hasHeal = false
+            action {
+                data.removePendingKill(this,WerewolvesKill::class)
+                witch::hasHeal undoAssign false
+            }
+            selfContinuation {
+                targetState = finished
             }
         }
         witchKill {
-            onEntry {
-                data.addPendingKill(WitchKill())
+            action {
+                data.addPendingKill(this,WitchKill())
                 witch.hasKill = false
+            }
+            selfContinuation {
+                targetState = finished
             }
         }
 

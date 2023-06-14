@@ -1,13 +1,12 @@
 package net.leloubil.common.gamelogic.steps
 
-import io.github.aakira.napier.Napier
-import net.leloubil.common.gamelogic.GameDefinition
+import net.leloubil.common.gamelogic.*
 import ru.nsk.kstatemachine.*
 
 class SelfContinueEvent : Event
 
 interface SelfContinueGameStep : IState
-open class SelfContinueDefaultStep(name: String, private val gameDefinition: GameDefinition) : DefaultState(name), SelfContinueGameStep{
+open class SelfContinueDefaultStep(name: String, private val gameDefinition: MutableGameDefinition) : ActionableDefaultStep(name,gameDefinition), SelfContinueGameStep{
     override val listeners: Collection<IState.Listener>
         get() = super.listeners +  object : IState.Listener {
             override suspend fun onEntry(transitionParams: TransitionParams<*>) {
@@ -18,12 +17,12 @@ open class SelfContinueDefaultStep(name: String, private val gameDefinition: Gam
 
 open class SelfContinueDataStep<D : Any>(
     name: String,
-    private val gameDefinition: GameDefinition,
-    dataExtractor: DataExtractor<D>
-) : DefaultDataState<D>(name, dataExtractor = dataExtractor), SelfContinueGameStep {
+    private val gameDefinition: MutableGameDefinition,
+    dataExtractor: DataExtractor<D>,
+) : ActionableDataStep<D>(name, gameDefinition,dataExtractor = dataExtractor), SelfContinueGameStep {
 
     override val listeners: Collection<IState.Listener>
-        get() = super.listeners +  object : IState.Listener {
+        get() = super.listeners + object : IState.Listener {
             override suspend fun onEntry(transitionParams: TransitionParams<*>) {
                 gameDefinition.stateMachine.processEvent(SelfContinueEvent())
             }

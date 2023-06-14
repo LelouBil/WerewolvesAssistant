@@ -2,46 +2,25 @@ package net.leloubil.common.ui.theme
 
 import androidx.compose.material.Typography
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.sp
 
-private val Acme = FontFamily(
-    listOf(
-        Font(
-            resource = "/font/Acme-Regular.ttf",
-            weight = FontWeight.Normal,
-            style = FontStyle.Normal
-        )
-    )
-)
 
-private val Boogaloo = FontFamily(
-    listOf(
-        Font(
-            resource = "/font/Boogaloo-Regular.ttf",
-            weight = FontWeight.Normal,
-            style = FontStyle.Normal
-        )
-    )
-)
 
 // Set of Material typography styles to start with
 val Typography = Typography(
     h1 = TextStyle(
-        fontFamily = Boogaloo,
+        fontFamily = boogalooFontFamily,
         fontWeight = FontWeight.Bold,
         fontSize = 36.sp
     ),
     body1 = TextStyle(
-        fontFamily = Acme,
+        fontFamily = acmeFontFamily,
         fontWeight = FontWeight.Normal,
         fontSize = 16.sp
     ),
     button = TextStyle(
-        fontFamily = Acme,
+        fontFamily = acmeFontFamily,
         fontWeight = FontWeight.Bold,
         fontSize = 20.sp,
         color = Background,

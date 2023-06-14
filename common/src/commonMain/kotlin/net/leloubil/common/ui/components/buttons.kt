@@ -1,4 +1,4 @@
-package net.leloubil.common.ui.component
+package net.leloubil.common.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.fillMaxWidth

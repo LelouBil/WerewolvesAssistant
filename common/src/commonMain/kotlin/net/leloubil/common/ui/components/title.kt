@@ -1,4 +1,4 @@
-package net.leloubil.common.ui.component
+package net.leloubil.common.ui.components
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Text

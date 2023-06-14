@@ -3,6 +3,7 @@ plugins {
     kotlin("multiplatform")
     id("org.jetbrains.compose")
     id("com.android.library")
+    id("kotlin-parcelize")
     alias(libs.plugins.kotest.multiplatform)
 }
 
@@ -22,10 +23,14 @@ kotlin {
                 api(compose.foundation)
                 api(compose.material)
                 api(libs.logging)
+                api(libs.decompose)
+                api(libs.decompose.extensions.jetbrains)
+                api(compose.preview)
+                implementation("androidx.compose.ui:ui-tooling-preview:1.4.3")
+                implementation("androidx.compose.ui:ui-tooling:1.4.3")
                 implementation(libs.kotlin.reflect)
                 implementation(libs.kstatemachine)
                 implementation(libs.kstatemachine.coroutines)
-                implementation(libs.mordant)
                 implementation(kotlin("reflect"))
             }
         }
@@ -52,7 +57,7 @@ kotlin {
         }
         val desktopMain by getting {
             dependencies {
-                api(compose.preview)
+                implementation(libs.mordant)
             }
         }
         val desktopTest by getting {
@@ -83,6 +88,10 @@ tasks.named<Test>("desktopTest") {
 android {
     compileSdk = 33
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
+    sourceSets["main"].res.srcDirs(
+        "src/commonMain/resources",
+        "src/androidMain/resources"
+    )
     defaultConfig {
         minSdk = 26
         @Suppress("UnstableApiUsage")
@@ -92,6 +101,7 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
     kotlin
     namespace = "net.leloubil.common"
 }
