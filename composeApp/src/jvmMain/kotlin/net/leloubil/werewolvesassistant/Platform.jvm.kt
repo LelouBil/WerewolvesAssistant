@@ -1,0 +1,2 @@
+package net.leloubil.werewolvesassistant
+
