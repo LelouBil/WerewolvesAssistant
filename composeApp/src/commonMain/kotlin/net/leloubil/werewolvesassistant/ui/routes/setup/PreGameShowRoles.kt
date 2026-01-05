@@ -14,15 +14,16 @@ import org.koin.core.annotation.InjectedParam
 import werewolvesassistant.composeapp.generated.resources.*
 
 @KoinViewModel
-class PreGameShowRolesViewModel(@InjectedParam players: RolesList, @InjectedParam showingIndex: UInt?) : ViewModel() {
+class PreGameShowRolesViewModel(@InjectedParam val players: RolesList, @InjectedParam val showingIndex: UInt?) : ViewModel() {
 
-    val currentRole = showingIndex?.let { players[it] }
+    val currentRole = showingIndex?.let { players[it.toInt()] }
 
 }
 
 @Composable
-fun PreGameShowRoles(viewModel: PreGameShowRolesViewModel, nextShowIndex: () -> Unit) {
+fun PreGameShowRoles(viewModel: PreGameShowRolesViewModel, nextShowIndex: () -> Unit) = Column {
     val pair = viewModel.currentRole
+
     if (pair == null) {
         Column {
             Text(stringResource(Res.string.show_roles_title), style = MaterialTheme.typography.titleLarge)

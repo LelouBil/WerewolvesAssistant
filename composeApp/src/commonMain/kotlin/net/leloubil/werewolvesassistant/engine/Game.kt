@@ -5,6 +5,7 @@ import arrow.core.left
 import arrow.core.raise.Raise
 import arrow.core.raise.context.raise
 import arrow.core.right
+import kotlinx.serialization.Serializable
 
 private val scheduleOrder = listOf(
     GameStepPrompt.NightBegin,
@@ -23,33 +24,50 @@ private val scheduleOrder = listOf(
 
 typealias RolesList = List<Pair<PlayerName, Role>>
 
+@Serializable
 data class Game private constructor(
     val players: List<PlayerName>,
     val steps: List<GameStepData>,
     private val nextPrompts: List<GameStepPrompt<*, *>>,
 ) {
-    companion object;
+    val nextPrompt: GameStepPrompt<*, *>? = nextPrompts.firstOrNull()
+
     sealed interface LivingState {
         data class Alive(val cause: GameStepData.MarksAlive?) : LivingState
-        data class Dead(val cause: GameStepData.MarksPublicKilled) : LivingState
+        sealed class Dead: LivingState{
+            abstract val cause: GameStepData
+        }
+        data class PublicDead(override val cause: GameStepData.MarksPublicKilled) : Dead()
+        data class NightHiddenDead(override val cause: GameStepData.NightHiddenKill) : Dead()
+
     }
 
     data class InitialRoles(override val assignments: Map<PlayerName, List<Role>>) : GameStepData.SetsRole
 
-    constructor(players: List<Pair<PlayerName, Role>>) : this(
-        players = players.map { it.first },
-        steps = listOf(InitialRoles(players.associate { it.first to listOf(it.second) })),
-        nextPrompts = scheduleOrder
-    )
+    companion object {
+        operator fun invoke(players: List<Pair<PlayerName, Role>>): Game? {
+            val g = Game(
+                players = players.map { it.first },
+                steps = listOf(InitialRoles(players.associate { it.first to listOf(it.second) })),
+                nextPrompts = emptyList()
+            )
+            return g.scheduleNext().getOrNull()
+        }
+    }
 
 
     context(_: Raise<E>)
-    fun <P : GameStepPrompt<T, E>, T : GameStepData, E> applyPrompt(data: T, prompt: P): Either<GameEnd, Game> {
+    fun <P : GameStepPrompt<T, E>, T : GameStepData, E> removeLastPromptAndApply(data: T, prompt: P): Either<GameEnd, Game> {
+        val next = nextPrompt
+        if (next != prompt) {
+            //todo better error
+            throw IllegalStateException("Trying to apply data that is not the last step")
+        }
         val possibleError = prompt.checkStepData(this, data)
         if (possibleError != null) {
             raise(possibleError)
         }
-        return copy(steps = steps + data).scheduleNext()
+        return copy(steps = steps + data, nextPrompts = nextPrompts.drop(1)).scheduleNext()
     }
 
     private inline fun <reified T : Role.Team> List<List<Role>>.allOfTeam(): Boolean {
@@ -58,6 +76,26 @@ data class Game private constructor(
 
     private fun scheduleNext(): Either<GameEnd, Game> {
         val game = this
+
+        val last = game.steps.last()
+        if (last is GameStepData.MarksPublicKilled) {
+            val killedPlayers = last.killed
+            if (killedPlayers.map { game.getRoles(it) }.any { it.contains(Role.Hunter) }) {
+                return game.copy(
+                    nextPrompts = listOf(GameStepPrompt.HunterKill) + game.nextPrompts
+                ).right()
+            }
+            val lovers = game.steps.filterIsInstance<GameStepPrompt.CupidSetLovers.Data>().firstOrNull()
+            if (lovers != null && (killedPlayers.contains(lovers.player1) || killedPlayers.contains(lovers.player2))) {
+                if (!killedPlayers.containsAll(setOf(lovers.player1, lovers.player2))) {
+                    val other = if (killedPlayers.contains(lovers.player1)) lovers.player2 else lovers.player1
+                    return game.copy(
+                        nextPrompts = listOf(GameStepPrompt.DeathByLove(other)) + game.nextPrompts
+                    ).right()
+                }
+            }
+        }
+
         if (game.steps.last().checkGameEnd) {
             val livingPlayers = game.players.filter { game.getLivingState(it) is LivingState.Alive }
 
@@ -72,25 +110,6 @@ data class Game private constructor(
                 return GameEnd.VillagersWon(livingPlayers.toSet()).left()
             } else if (livingPlayers.map { game.getRoles(it) }.allOfTeam<Role.Team.WerewolvesTeam>()) {
                 return GameEnd.WerewolvesWon(livingPlayers.toSet()).left()
-            }
-        }
-
-        val last = game.steps.last()
-        if (last is GameStepData.MarksPublicKilled) {
-            val killedPlayers = last.killed
-            if (killedPlayers.map { game.getRoles(it) }.any { it.contains(Role.Hunter) }) {
-                return game.copy(
-                    nextPrompts = game.nextPrompts + listOf(GameStepPrompt.HunterKill)
-                ).right()
-            }
-            val lovers = game.steps.filterIsInstance<GameStepPrompt.CupidSetLovers.Data>().firstOrNull()
-            if (lovers != null && (killedPlayers.contains(lovers.player1) || killedPlayers.contains(lovers.player2))) {
-                if (!killedPlayers.containsAll(setOf(lovers.player1, lovers.player2))) {
-                    val other = if (killedPlayers.contains(lovers.player1)) lovers.player2 else lovers.player1
-                    return game.copy(
-                        nextPrompts = game.nextPrompts + listOf(GameStepPrompt.DeathByLove(other))
-                    ).right()
-                }
             }
         }
 
@@ -137,7 +156,10 @@ fun Game.getLivingState(player: PlayerName): Game.LivingState {
     return steps.asReversed().firstNotNullOfOrNull {
         when (it) {
             is GameStepData.MarksPublicKilled if it.killed.contains(player) -> {
-                Game.LivingState.Dead(it)
+                Game.LivingState.PublicDead(it)
+            }
+            is GameStepData.NightHiddenKill if it.hiddenKilled.contains(player) -> {
+                Game.LivingState.NightHiddenDead(it)
             }
 
             is GameStepData.MarksAlive if it.alive.contains(player) -> {

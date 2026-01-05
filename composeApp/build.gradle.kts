@@ -10,6 +10,7 @@ plugins {
     alias(libs.plugins.composeHotReload)
     alias(libs.plugins.kotlinPluginSerialization)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.kotest)
 }
 
 kotlin {
@@ -61,6 +62,9 @@ kotlin {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
         }
+        jvmTest.dependencies {
+            implementation(libs.kotest.runner.junit5)
+        }
 
         // KSP Common sourceSet
         commonMain {
@@ -109,6 +113,10 @@ dependencies {
     myksp(libs.arrow.optics.ksp)
     myksp(libs.koin.ksp)
 }
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
+}
+
 
 compose.desktop {
     application {

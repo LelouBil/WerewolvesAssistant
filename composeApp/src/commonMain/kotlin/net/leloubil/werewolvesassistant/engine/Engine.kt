@@ -5,6 +5,7 @@ import arrow.core.raise.Raise
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.PluralStringResource
 import werewolvesassistant.composeapp.generated.resources.*
+import kotlin.collections.emptyList
 
 
 sealed class GameStepPromptChoosePlayer<T : GameStepData, E> : GameStepPrompt<T, E>() {
@@ -35,6 +36,11 @@ sealed class ConfirmationStepPrompt<I : ConfirmationStepPrompt.Info> :
 
     override fun checkStepData(game: Game, data: I): Nothing? = null
     abstract fun getInfo(game: Game): I
+
+    context(_: Raise<Nothing>)
+    fun process(game: Game): Either<GameEnd, Game> {
+        return game.removeLastPromptAndApply(getInfo(game), this)
+    }
 }
 
 
@@ -102,6 +108,7 @@ sealed interface GameStepData {
 
 }
 
+@Serializable
 sealed class GameStepPrompt<T : GameStepData, E> {
     abstract fun exists(game: Game): Boolean
 
@@ -109,7 +116,7 @@ sealed class GameStepPrompt<T : GameStepData, E> {
 
     context(_: Raise<E>)
     fun process(game: Game, data: T): Either<GameEnd, Game> {
-        return game.applyPrompt(data, this)
+        return game.removeLastPromptAndApply(data, this)
     }
 
 
@@ -132,13 +139,15 @@ sealed class GameStepPrompt<T : GameStepData, E> {
 
         override fun exists(game: Game): Boolean = true
         override fun getInfo(game: Game): Info {
-            val summary = game.thisNight()
-                .filterIsInstance<GameStepData.NightHiddenKill>()
-                .reversed().flatMap {
-                    it.hiddenKilled.map { player -> player to game.getRoles(player) } //todo peut être afficher uniquement le premier role
-                }.filter {
-                    game.getLivingState(it.first) is Game.LivingState.Dead // On garde que ceux qui sont vraiment morts (pas rez)
-                }
+            val summary = game.thisNight().fold(emptyList<PlayerName>()) { acc, step ->
+                    when(step){
+                        is GameStepData.NightHiddenKill -> acc + step.hiddenKilled
+                        is GameStepData.MarksPublicKilled -> acc + step.killed
+                        is GameStepData.MarksAlive -> acc - step.alive
+                        else -> acc
+                    }
+                }.map { it to game.getRoles(it) }
+
             return Info(summary)
         }
     }
@@ -372,8 +381,8 @@ sealed class GameStepPrompt<T : GameStepData, E> {
     }
 
     data object WerewolvesKill : GameStepPromptChoosePlayer<WerewolvesKill.Data, WerewolvesKill.Errors>() {
-        data class Data(val victim: PlayerName) : GameStepData, GameStepData.MarksPublicKilled {
-            override val killed = setOf(victim)
+        data class Data(val victim: PlayerName) : GameStepData, GameStepData.NightHiddenKill {
+            override val hiddenKilled = setOf(victim)
         }
 
         override fun exists(game: Game): Boolean = game.hasAliveRole(Role.Werewolf)
@@ -415,7 +424,7 @@ sealed class GameStepPrompt<T : GameStepData, E> {
 }
 
 private fun Game.thisNight(): List<GameStepData> {
-    return this.steps.asReversed().takeWhile { it !is GameStepPrompt.NightBegin.Info }
+    return this.steps.asReversed().takeWhile { it !is GameStepPrompt.NightBegin.Info }.reversed()
 }
 
 

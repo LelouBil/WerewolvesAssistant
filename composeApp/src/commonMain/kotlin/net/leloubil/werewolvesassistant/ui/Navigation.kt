@@ -1,3 +1,7 @@
+@file:UseSerializers(
+    EitherSerializer::class,
+)
+
 package net.leloubil.werewolvesassistant.ui
 
 import androidx.compose.foundation.layout.Column
@@ -10,10 +14,16 @@ import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.ui.NavDisplay
 import androidx.savedstate.serialization.SavedStateConfiguration
+import arrow.core.Either
+import arrow.core.right
+import arrow.core.serialization.EitherSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.UseSerializers
 import kotlinx.serialization.modules.SerializersModule
+import net.leloubil.werewolvesassistant.engine.Game
+import net.leloubil.werewolvesassistant.engine.GameEnd
 import net.leloubil.werewolvesassistant.engine.PlayerName
-import net.leloubil.werewolvesassistant.engine.Role
+import net.leloubil.werewolvesassistant.engine.RolesList
 import net.leloubil.werewolvesassistant.ui.routes.MainMenu
 import net.leloubil.werewolvesassistant.ui.routes.setup.ChoosePlayersMenu
 import net.leloubil.werewolvesassistant.ui.routes.setup.ChooseRolesMenu
@@ -21,6 +31,7 @@ import net.leloubil.werewolvesassistant.ui.routes.setup.GameScreen
 import net.leloubil.werewolvesassistant.ui.routes.setup.PreGameShowRoles
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+
 
 @Serializable
 sealed interface NavRoutes : NavKey {
@@ -37,11 +48,18 @@ sealed interface NavRoutes : NavKey {
     data class ChooseRolesScreen(val players: List<PlayerName>) : CreateGameScreens
 
     @Serializable
-    data class PreGameShowRolesScreen(val players: List<Pair<PlayerName, Role>>, val showingIndex: UInt?) :
+    data class PreGameShowRolesScreen(val players: RolesList, val showingIndex: UInt?) :
         CreateGameScreens
 
     @Serializable
-    data class GameScreen(val players: List<Pair<PlayerName, Role>>) : CreateGameScreens
+    sealed interface GameScreen : CreateGameScreens {
+        @Serializable
+        data class GameScreenStart(val players: RolesList) : GameScreen
+
+        @Serializable
+        data class GameScreenTurn(val game: Either<GameEnd, Game>) : GameScreen
+    }
+
 }
 
 private val config = SavedStateConfiguration {
@@ -75,7 +93,7 @@ fun NavRoot() {
 
                     is NavRoutes.ChooseRolesScreen -> NavEntry(key) {
                         ChooseRolesMenu(
-                            koinViewModel { parametersOf(key.players) },
+                            koinViewModel(key = key.toString()) { parametersOf(key.players) },
                             preGame = {
                                 navigate(
                                     NavRoutes.PreGameShowRolesScreen(
@@ -87,10 +105,12 @@ fun NavRoot() {
                     }
 
                     is NavRoutes.PreGameShowRolesScreen -> NavEntry(key) {
+                        println(key)
                         PreGameShowRoles(
-                            koinViewModel { parametersOf(key.players, key.showingIndex) },
+                            koinViewModel(key = key.toString()) { parametersOf(key.players, key.showingIndex) },
                             nextShowIndex = {
                                 if (key.showingIndex == null) {
+                                    println("ShowingIndex null")
                                     navigate(
                                         NavRoutes.PreGameShowRolesScreen(
                                             key.players,
@@ -101,7 +121,7 @@ fun NavRoot() {
                                 } else if (key.showingIndex + 1u >= key.players.size.toUInt()) {
                                     //all shown, go to game screen
                                     navigate(
-                                        NavRoutes.GameScreen(
+                                        NavRoutes.GameScreen.GameScreenStart(
                                             key.players
                                         )
                                     )
@@ -120,7 +140,14 @@ fun NavRoot() {
                     }
 
                     is NavRoutes.GameScreen -> NavEntry(key) {
-                        GameScreen(koinViewModel { parametersOf(key.players) })
+                        val nextGame: (Either<GameEnd, Game>) -> Unit = {
+                            println("navigating: $it")
+                            navigate(NavRoutes.GameScreen.GameScreenTurn(it))
+                        }
+                        when (key) {
+                            is NavRoutes.GameScreen.GameScreenStart -> GameScreen(Game(key.players)!!.right(),nextGame)
+                            is NavRoutes.GameScreen.GameScreenTurn -> GameScreen(key.game,nextGame)
+                        }
                     }
                 }
             }

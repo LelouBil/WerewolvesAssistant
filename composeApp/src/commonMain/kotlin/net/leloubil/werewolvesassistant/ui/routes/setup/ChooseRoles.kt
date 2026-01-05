@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import net.leloubil.werewolvesassistant.engine.PlayerName
 import net.leloubil.werewolvesassistant.engine.Role
+import net.leloubil.werewolvesassistant.engine.RolesList
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.android.annotation.KoinViewModel
@@ -57,7 +58,7 @@ class ChooseRolesMenuViewModel(@InjectedParam val players: List<PlayerName>) : V
 }
 
 @Composable
-fun ChooseRolesMenu(viewModel: ChooseRolesMenuViewModel, preGame: (List<Pair<PlayerName, Role>>) -> Unit) =
+fun ChooseRolesMenu(viewModel: ChooseRolesMenuViewModel, preGame: (RolesList) -> Unit) =
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         val counts by viewModel.counts.collectAsState()
 
