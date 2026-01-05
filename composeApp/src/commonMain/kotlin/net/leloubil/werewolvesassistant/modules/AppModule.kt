@@ -8,7 +8,7 @@ import org.koin.core.annotation.Module
 
 
 @Module
-@ComponentScan("net.leloubil.werewolvesassistant.modules")
+@ComponentScan("net.leloubil.werewolvesassistant")
 @Configuration
 class AppModule
 

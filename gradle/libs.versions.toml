@@ -48,6 +48,7 @@ arrow-core-serialization = { module= "io.arrow-kt:arrow-core-serialization", ver
 arrow-fxCoroutines = { module = "io.arrow-kt:arrow-fx-coroutines", version.ref = "arrow" }
 arrow-resilience = { module = "io.arrow-kt:arrow-resilience", version.ref = "arrow" }
 arrow-optics = { module = "io.arrow-kt:arrow-optics", version.ref = "arrow" }
+arrow-optics-compose = { module = "io.arrow-kt:arrow-optics-compose", version.ref = "arrow" }
 arrow-optics-ksp = { module = "io.arrow-kt:arrow-optics-ksp-plugin", version.ref = "arrow" }
 
 kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
@@ -58,6 +59,7 @@ kotest-property-arrow = { module = "io.kotest:kotest-property-arrow", version.re
 koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
 koin-compose-viewModel = { module = "io.insert-koin:koin-compose-viewmodel", version.ref = "koin" }
 koin-annotations = { module = "io.insert-koin:koin-annotations", version.ref = "koin-annotations" }
+koin-navigation3 = { module = "io.insert-koin:koin-compose-navigation3", version.ref = "koin"}
 koin-ksp = { module = "io.insert-koin:koin-ksp-compiler", version.ref = "koin-annotations" }
 
 klogging = { module = "io.klogging:klogging", version.ref = "klogging" }
@@ -69,9 +71,9 @@ kotlinxCoroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", 
 
 [bundles]
 kotlinxEcosystem = ["kotlinxDatetime", "kotlinxSerialization", "kotlinxCoroutines"]
-arrow  = ["arrow-core", "arrow-fxCoroutines", "arrow-resilience", "arrow-optics","arrow-core-serialization"]
+arrow  = ["arrow-core", "arrow-fxCoroutines", "arrow-resilience", "arrow-optics","arrow-optics-compose","arrow-core-serialization"]
 kotest = ["kotest-assertions-core", "kotest-assertions-arrow", "kotest-property", "kotest-property-arrow"]
-koin = ["koin-core", "koin-compose-viewModel", "koin-annotations"]
+koin = ["koin-core", "koin-compose-viewModel", "koin-annotations","koin-navigation3"]
 androidx-multiplatform = [
     "androidx-lifecycle-runtimeCompose",
     "androidx-lifecycle-viewmodelCompose",
