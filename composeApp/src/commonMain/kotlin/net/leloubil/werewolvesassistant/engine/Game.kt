@@ -5,10 +5,25 @@ import arrow.core.left
 import arrow.core.raise.Raise
 import arrow.core.raise.context.raise
 import arrow.core.right
-import arrow.optics.optics
 
-@optics
-data class Game(
+private val scheduleOrder = listOf(
+    GameStepPrompt.NightBegin,
+    GameStepPrompt.CupidSetLovers,
+    GameStepPrompt.GuardProtect,
+    GameStepPrompt.SeerSee,
+    GameStepPrompt.SeerShow,
+    GameStepPrompt.WerewolvesKill,
+    GameStepPrompt.GuardResurrect,
+    GameStepPrompt.WitchShow,
+    GameStepPrompt.WitchStep,
+    GameStepPrompt.NightEnd,
+    GameStepPrompt.MayorElection,
+    GameStepPrompt.VillagersKillVote,
+)
+
+typealias RolesList = List<Pair<PlayerName, Role>>
+
+data class Game private constructor(
     val players: List<PlayerName>,
     val steps: List<GameStepData>,
     private val nextPrompts: List<GameStepPrompt<*, *>>,
@@ -19,6 +34,15 @@ data class Game(
         data class Dead(val cause: GameStepData.MarksPublicKilled) : LivingState
     }
 
+    data class InitialRoles(override val assignments: Map<PlayerName, List<Role>>) : GameStepData.SetsRole
+
+    constructor(players: List<Pair<PlayerName, Role>>) : this(
+        players = players.map { it.first },
+        steps = listOf(InitialRoles(players.associate { it.first to listOf(it.second) })),
+        nextPrompts = scheduleOrder
+    )
+
+
     context(_: Raise<E>)
     fun <P : GameStepPrompt<T, E>, T : GameStepData, E> applyPrompt(data: T, prompt: P): Either<GameEnd, Game> {
         val possibleError = prompt.checkStepData(this, data)
@@ -28,13 +52,22 @@ data class Game(
         return copy(steps = steps + data).scheduleNext()
     }
 
+    private inline fun <reified T : Role.Team> List<List<Role>>.allOfTeam(): Boolean {
+        return all { it.filterIsInstance<T>().any() }
+    }
+
     private fun scheduleNext(): Either<GameEnd, Game> {
         val game = this
         if (game.steps.last().checkGameEnd) {
             val livingPlayers = game.players.filter { game.getLivingState(it) is LivingState.Alive }
-            inline fun <reified T : Role.Team> List<List<Role>>.allOfTeam(): Boolean {
-                return all { it.filterIsInstance<T>().any() }
+
+            val lovers = game.steps.filterIsInstance<GameStepPrompt.CupidSetLovers.Data>().firstOrNull()
+            if (lovers != null) {
+                if (livingPlayers.toSet() == setOf(lovers.player1, lovers.player2)) {
+                    return GameEnd.LoversWon(lovers.player1, lovers.player2).left()
+                }
             }
+
             if (livingPlayers.map { game.getRoles(it) }.allOfTeam<Role.Team.VillagersTeam>()) {
                 return GameEnd.VillagersWon(livingPlayers.toSet()).left()
             } else if (livingPlayers.map { game.getRoles(it) }.allOfTeam<Role.Team.WerewolvesTeam>()) {
@@ -50,12 +83,39 @@ data class Game(
                     nextPrompts = game.nextPrompts + listOf(GameStepPrompt.HunterKill)
                 ).right()
             }
+            val lovers = game.steps.filterIsInstance<GameStepPrompt.CupidSetLovers.Data>().firstOrNull()
+            if (lovers != null && (killedPlayers.contains(lovers.player1) || killedPlayers.contains(lovers.player2))) {
+                if (!killedPlayers.containsAll(setOf(lovers.player1, lovers.player2))) {
+                    val other = if (killedPlayers.contains(lovers.player1)) lovers.player2 else lovers.player1
+                    return game.copy(
+                        nextPrompts = game.nextPrompts + listOf(GameStepPrompt.DeathByLove(other))
+                    ).right()
+                }
+            }
         }
 
         if (game.nextPrompts.isEmpty()) {
             return game.copy(nextPrompts = scheduleOrder.filter { it.exists(game) }).right()
         }
         return game.right()
+    }
+
+}
+
+
+sealed interface GameEnd {
+    val winningPlayers: Set<PlayerName>
+
+    data class VillagersWon(private val villagers: Set<PlayerName>) : GameEnd {
+        override val winningPlayers: Set<PlayerName> = villagers
+    }
+
+    data class WerewolvesWon(private val werewolves: Set<PlayerName>) : GameEnd {
+        override val winningPlayers: Set<PlayerName> = werewolves
+    }
+
+    class LoversWon(lover1: PlayerName, lover2: PlayerName) : GameEnd {
+        override val winningPlayers: Set<PlayerName> = setOf(lover1, lover2)
     }
 
 }

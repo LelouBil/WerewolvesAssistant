@@ -1,4 +1,57 @@
 <resources>
     <string name="app_name">WerewolvesAssistant</string>
     <string name="create_game_button">Nouvelle partie</string>
+    <!-- region Role names -->
+    <plurals name="role_werewolf">
+        <item quantity="one">Loup-garou</item>
+        <item quantity="other">Loups-garous</item>
+    </plurals>
+    <plurals name="role_guard">
+        <item quantity="one">Garde</item>
+        <item quantity="other">Gardes</item>
+    </plurals>
+    <plurals name="role_villager">
+        <item quantity="one">Simple Villageois</item>
+        <item quantity="other">Simples Villageois</item>
+    </plurals>
+    <plurals name="role_seer">
+        <item quantity="one">Voyante</item>
+        <item quantity="other">Voyantes</item>
+    </plurals>
+    <plurals name="role_witch">
+        <item quantity="one">Sorcière</item>
+        <item quantity="other">Sorcières</item>
+    </plurals>
+    <plurals name="role_hunter">
+        <item quantity="one">Chasseur</item>
+        <item quantity="other">Chasseurs</item>
+    </plurals>
+    <plurals name="role_cupid">
+        <item quantity="one">Cupidon</item>
+        <item quantity="other">Cupidons</item>
+    </plurals>
+    <!-- endregion -->
+
+    <!-- region team names -->
+    <string name="team_werewolves">Loups-garous</string>
+    <string name="team_villagers">Villageois</string>
+    <string name="team_lovers">Amoureux</string>
+    <!-- endregion -->
+
+    <!-- region selection roles -->
+    <string name="select_roles_add">Ajouter</string>
+    <string name="select_roles_remove">Retirer</string>
+    <string name="select_roles_title">Sélection des rôles</string>
+    <string name="select_roles_subtitle">Sélectionnez les rôles pour cette partie</string>
+    <string name="select_roles_randomize">Assigner les rôles aléatoirement</string>
+    <string name="select_roles_continue">Continuer</string>
+    <!-- endregion -->
+
+    <!-- region affichage roles -->
+    <string name="show_roles_title">Affichage des rôles</string>
+    <string name="show_roles_start_button">Montrer</string>
+    <string name="show_roles_player_text">Rôle de %1$s</string>
+    <string name="show_role_instructions">Révéler le rôle</string>
+    <string name="show_role_close">Terminé</string>
+    <!-- endregion -->
 </resources>

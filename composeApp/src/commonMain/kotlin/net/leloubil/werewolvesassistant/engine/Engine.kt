@@ -2,7 +2,9 @@ package net.leloubil.werewolvesassistant.engine
 
 import arrow.core.Either
 import arrow.core.raise.Raise
-import arrow.optics.optics
+import kotlinx.serialization.Serializable
+import org.jetbrains.compose.resources.PluralStringResource
+import werewolvesassistant.composeapp.generated.resources.*
 
 
 sealed class GameStepPromptChoosePlayer<T : GameStepData, E> : GameStepPrompt<T, E>() {
@@ -17,6 +19,8 @@ sealed class GameStepPromptChoosePlayer<T : GameStepData, E> : GameStepPrompt<T,
 
 sealed interface Destination {
     data object All : Destination
+    data object None : Destination
+
     data class Specific(val roles: Set<Role>) : Destination {
         constructor(vararg roles: Role) : this(roles.toSet())
     }
@@ -34,24 +38,47 @@ sealed class ConfirmationStepPrompt<I : ConfirmationStepPrompt.Info> :
 }
 
 
+@Serializable
 sealed interface Role {
+    val name: PluralStringResource
+
     sealed interface Team {
         sealed interface VillagersTeam : Team
         sealed interface WerewolvesTeam : Team
 
     }
 
-    data object SimpleVillager : Role, Team.VillagersTeam
+    data object SimpleVillager : Role, Team.VillagersTeam {
+        override val name: PluralStringResource = Res.plurals.role_villager
+    }
 
-    data object Seer : Role, Team.VillagersTeam
+    data object Cupid : Role, Team.VillagersTeam {
+        override val name: PluralStringResource = Res.plurals.role_cupid
+    }
 
-    data object Hunter : Role, Team.VillagersTeam
+    data object Seer : Role, Team.VillagersTeam {
+        override val name: PluralStringResource = Res.plurals.role_seer
+    }
 
-    data object Werewolf : Role, Team.WerewolvesTeam
+    data object Witch : Role, Team.VillagersTeam {
+        override val name: PluralStringResource = Res.plurals.role_witch
+    }
+
+    data object Guard : Role, Team.VillagersTeam {
+        override val name: PluralStringResource = Res.plurals.role_guard
+    }
+
+    data object Hunter : Role, Team.VillagersTeam {
+        override val name: PluralStringResource = Res.plurals.role_hunter
+    }
+
+    data object Werewolf : Role, Team.WerewolvesTeam {
+        override val name: PluralStringResource = Res.plurals.role_werewolf
+    }
 
 }
 
-@optics
+
 sealed interface GameStepData {
     companion object;
     val checkGameEnd: Boolean get() = false
@@ -105,15 +132,179 @@ sealed class GameStepPrompt<T : GameStepData, E> {
 
         override fun exists(game: Game): Boolean = true
         override fun getInfo(game: Game): Info {
-            val summary = game.steps.asReversed().takeWhile { it !is NightBegin.Info }
+            val summary = game.thisNight()
                 .filterIsInstance<GameStepData.NightHiddenKill>()
                 .reversed().flatMap {
                     it.hiddenKilled.map { player -> player to game.getRoles(player) } //todo peut être afficher uniquement le premier role
+                }.filter {
+                    game.getLivingState(it.first) is Game.LivingState.Dead // On garde que ceux qui sont vraiment morts (pas rez)
                 }
             return Info(summary)
         }
     }
 
+    data class DeathByLove(val dead: PlayerName) : ConfirmationStepPrompt<DeathByLove.Info>() {
+        data class Info(val dead: PlayerName) : ConfirmationStepPrompt.Info, GameStepData.MarksPublicKilled {
+            override val destination: Destination = Destination.All
+            override val killed: Set<PlayerName> = setOf(dead)
+        }
+
+        override fun exists(game: Game): Boolean = true
+        override fun getInfo(game: Game): Info = Info(dead)
+    }
+
+    data object CupidSetLovers : GameStepPrompt<CupidSetLovers.Data, CupidSetLovers.Error>() {
+        data class Data(val player1: PlayerName, val player2: PlayerName) : GameStepData
+        data class DeathByLove(val player: PlayerName) : GameStepData.MarksPublicKilled {
+            override val killed: Set<PlayerName> = setOf(player)
+        }
+
+        sealed interface Error {
+            data class PlayerIsDead(val player: PlayerName) : Error
+            data object LoversAlreadySet : Error
+            data class SamePlayerChosen(val player: PlayerName) : Error
+
+        }
+
+        override fun exists(game: Game): Boolean =
+            game.hasAliveRole(Role.Cupid) && game.steps.filterIsInstance<Data>().none()
+
+        override fun checkStepData(game: Game, data: Data): Error? {
+            if (data.player1 == data.player2) {
+                return Error.SamePlayerChosen(data.player1)
+            }
+            if (game.getLivingState(data.player1) is Game.LivingState.Dead) {
+                return Error.PlayerIsDead(data.player1)
+            }
+            if (game.getLivingState(data.player2) is Game.LivingState.Dead) {
+                return Error.PlayerIsDead(data.player2)
+            }
+            if (game.steps.filterIsInstance<Data>().any()) {
+                return Error.LoversAlreadySet
+            }
+            return null
+        }
+    }
+
+    data object GuardProtect : GameStepPromptChoosePlayer<GuardProtect.Data, GuardProtect.Error>() {
+        data class Data(val player: PlayerName) : GameStepData
+        sealed interface Error {
+            data class PlayerWasProtectedLastTime(val player: PlayerName) : Error
+            data class PlayerIsDead(val player: PlayerName) : Error
+        }
+
+        override fun createPrompt(player: PlayerName): Data = Data(player)
+        override fun exists(game: Game): Boolean = game.hasAliveRole(Role.Guard)
+
+        override fun checkStepData(game: Game, data: Data): Error? {
+            if (game.getLivingState(data.player) is Game.LivingState.Dead) {
+                return Error.PlayerIsDead(data.player)
+            }
+            val lastGuardProtect = game.steps.filterIsInstance<Data>().lastOrNull()
+            if (lastGuardProtect != null && lastGuardProtect.player == data.player) {
+                return Error.PlayerWasProtectedLastTime(data.player)
+            }
+            return null
+        }
+    }
+
+    data object GuardResurrect : ConfirmationStepPrompt<GuardResurrect.Info>() {
+        data class Info(val resurrected: PlayerName?) : ConfirmationStepPrompt.Info, GameStepData.MarksAlive {
+            override val destination: Destination = Destination.None
+            override val alive: Set<PlayerName> = resurrected?.let { setOf(it) }.orEmpty()
+        }
+
+        override fun exists(game: Game): Boolean =
+            game.hasAliveRole(Role.Guard) && game.thisNight().filterIsInstance<GuardProtect.Data>().any()
+
+        override fun getInfo(game: Game): Info {
+            val guardProtects = game.thisNight().filterIsInstance<GuardProtect.Data>()
+            val lastProtect = guardProtects.last()
+            //todo parametre proteger de tout
+            val possibleRessurect = game.thisNight().filterIsInstance<WerewolvesKill.Data>().firstOrNull {
+                it.victim == lastProtect.player
+            }?.victim
+            return Info(possibleRessurect)
+        }
+    }
+
+    data object WitchShow : ConfirmationStepPrompt<WitchShow.Info>() {
+        data class Info(val killedByWolves: PlayerName?) : ConfirmationStepPrompt.Info {
+            override val destination: Destination = Destination.Specific(Role.Witch)
+        }
+
+        override fun exists(game: Game): Boolean = game.hasAliveRole(Role.Witch)
+        override fun getInfo(game: Game): Info {
+            val killedByWolves: PlayerName? = game.thisNight().fold(null) { acc, step ->
+                when (step) {
+                    is WerewolvesKill.Data -> step.victim
+                    is GameStepData.MarksAlive if step.alive.contains(acc) -> null
+                    else -> acc
+                }
+            }
+            return Info(killedByWolves)
+        }
+    }
+
+    data object WitchStep : GameStepPrompt<WitchStep.Data, WitchStep.Error>() {
+        sealed interface Data : GameStepData {
+            data class Heal(val player: PlayerName) : Data, GameStepData.MarksAlive {
+                override val alive = setOf(player)
+            }
+
+            data class Kill(val player: PlayerName) : Data, GameStepData.NightHiddenKill {
+                override val hiddenKilled = setOf(player)
+            }
+
+            data object Skip : Data
+        }
+
+        sealed interface Error {
+            data class HealedNotTargetedPlayer(val player: PlayerName) : Error
+            data class HealedLivingPlayer(val player: PlayerName) : Error
+            data object HealAlreadyUsed : Error
+            data class KilledDeadPlayer(val player: PlayerName) : Error
+            data object KillAlreadyUsed : Error
+        }
+
+        override fun exists(game: Game): Boolean = game.hasAliveRole(Role.Witch)
+
+        override fun checkStepData(game: Game, data: Data): Error? {
+            return when (data) {
+                is Data.Heal -> {
+                    val shownToWitch = game.getLast<WitchShow.Info>()?.killedByWolves
+                    when {
+                        shownToWitch == null || shownToWitch != data.player ->
+                            Error.HealedNotTargetedPlayer(data.player)
+
+                        game.getLivingState(data.player) is Game.LivingState.Alive ->
+                            Error.HealedLivingPlayer(data.player)
+
+                        game.steps.filterIsInstance<Data.Heal>().any<Data.Heal>() ->
+                            Error.HealAlreadyUsed
+
+                        else -> null
+                    }
+                }
+
+                is Data.Kill -> when {
+                    game.getLivingState(data.player) is Game.LivingState.Dead -> {
+                        Error.KilledDeadPlayer(data.player)
+                    }
+
+                    else -> {
+                        val alreadyKilled = game.steps.filterIsInstance<Data.Kill>().any()
+                        if (alreadyKilled) {
+                            Error.KillAlreadyUsed
+                        } else null
+                    }
+                }
+
+                is Data.Skip -> null
+            }
+        }
+
+    }
 
     data object MayorElection : GameStepPromptChoosePlayer<MayorElection.Data, MayorElection.Errors>() {
         override fun exists(game: Game): Boolean = alreadyHasMayor(game) == null
@@ -221,6 +412,10 @@ sealed class GameStepPrompt<T : GameStepData, E> {
             return Info(player, game.getRoles(player).first())
         }
     }
+}
+
+private fun Game.thisNight(): List<GameStepData> {
+    return this.steps.asReversed().takeWhile { it !is GameStepPrompt.NightBegin.Info }
 }
 
 
