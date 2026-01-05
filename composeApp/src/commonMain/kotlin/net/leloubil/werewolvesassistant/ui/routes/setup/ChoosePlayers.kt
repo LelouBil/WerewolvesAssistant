@@ -15,11 +15,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import net.leloubil.werewolvesassistant.engine.PlayerName
-import net.leloubil.werewolvesassistant.engine.Role
 import org.koin.android.annotation.KoinViewModel
 import org.koin.compose.viewmodel.koinViewModel
-import org.koin.dsl.module
-import org.koin.dsl.navigation3.navigation
 
 
 @KoinViewModel
@@ -42,36 +39,37 @@ class ChoosePlayersMenuViewModel : ViewModel() {
 }
 
 @Composable
-fun ChoosePlayersMenu(setRoles: (List<PlayerName>) -> Unit, viewModel: ChoosePlayersMenuViewModel = koinViewModel()) = Column {
-    Text("Create Game")
-    val players by viewModel.playersRoles.collectAsState()
-    HorizontalDivider()
-    players.forEachIndexed { idx, playerSlot ->
-        TextField(
-            playerSlot.name,
-            onValueChange = {
-                viewModel.setName(idx, PlayerName(it))
-            })
-        HorizontalDivider()
-        CrossButton {
-            viewModel.remove(idx)
-        }
-    }
-
-    Button(onClick = {
-        viewModel.addPlayer()
-    }) {
-        Text("Add Player")
-    }
-
-    Button(onClick = {
-        setRoles(players)
-    }) {
+fun ChoosePlayersMenu(setRoles: (List<PlayerName>) -> Unit, viewModel: ChoosePlayersMenuViewModel = koinViewModel()) =
+    Column {
         Text("Create Game")
+        val players by viewModel.playersRoles.collectAsState()
+        HorizontalDivider()
+        players.forEachIndexed { idx, playerSlot ->
+            TextField(
+                playerSlot.name,
+                onValueChange = {
+                    viewModel.setName(idx, PlayerName(it))
+                })
+            HorizontalDivider()
+            CrossButton {
+                viewModel.remove(idx)
+            }
+        }
+
+        Button(onClick = {
+            viewModel.addPlayer()
+        }) {
+            Text("Add Player")
+        }
+
+        Button(onClick = {
+            setRoles(players)
+        }) {
+            Text("Create Game")
+        }
+
+
     }
-
-
-}
 
 @Composable
 fun CrossButton(onClick: () -> Unit) {

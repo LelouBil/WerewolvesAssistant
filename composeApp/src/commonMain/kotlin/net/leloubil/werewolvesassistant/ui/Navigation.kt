@@ -45,9 +45,18 @@ fun NavRoot() {
         onBack = onBack,
         entryProvider = { key ->
             when (key) {
-                NavRoutes.MainScreen -> NavEntry(key) {MainMenu({ navigate(NavRoutes.ChoosePlayersScreen) })}
-                NavRoutes.ChoosePlayersScreen -> NavEntry(key) { ChoosePlayersMenu({ navigate(NavRoutes.ChooseRolesScreen(it)) })}
-                is NavRoutes.ChooseRolesScreen -> NavEntry(key) {ChooseRolesMenu(koinViewModel { parametersOf(key.players)})}
+                NavRoutes.MainScreen -> NavEntry(key) { MainMenu { navigate(NavRoutes.ChoosePlayersScreen) } }
+                NavRoutes.ChoosePlayersScreen -> NavEntry(key) {
+                    ChoosePlayersMenu({
+                        navigate(
+                            NavRoutes.ChooseRolesScreen(
+                                it
+                            )
+                        )
+                    })
+                }
+
+                is NavRoutes.ChooseRolesScreen -> NavEntry(key) { ChooseRolesMenu(koinViewModel { parametersOf(key.players) }) }
             }
         }
     )

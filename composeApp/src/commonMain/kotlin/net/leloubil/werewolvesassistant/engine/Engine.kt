@@ -2,12 +2,7 @@ package net.leloubil.werewolvesassistant.engine
 
 import arrow.core.Either
 import arrow.core.raise.Raise
-import arrow.core.raise.context.raise
 import arrow.optics.optics
-import net.leloubil.werewolvesassistant.engine.getLast
-import net.leloubil.werewolvesassistant.engine.getLivingState
-import net.leloubil.werewolvesassistant.engine.getRoles
-import net.leloubil.werewolvesassistant.engine.hasAliveRole
 
 
 sealed class GameStepPromptChoosePlayer<T : GameStepData, E> : GameStepPrompt<T, E>() {
@@ -45,6 +40,7 @@ sealed interface Role {
         sealed interface WerewolvesTeam : Team
 
     }
+
     data object SimpleVillager : Role, Team.VillagersTeam
 
     data object Seer : Role, Team.VillagersTeam
@@ -58,12 +54,14 @@ sealed interface Role {
 @optics
 sealed interface GameStepData {
     companion object;
-    open val checkGameEnd: Boolean get() = false
+    val checkGameEnd: Boolean get() = false
+
     interface MarksPublicKilled : GameStepData {
         val killed: Set<PlayerName>
         override val checkGameEnd: Boolean get() = true
     }
-    interface NightHiddenKill: GameStepData{
+
+    interface NightHiddenKill : GameStepData {
         val hiddenKilled: Set<PlayerName>
     }
 
@@ -84,7 +82,7 @@ sealed class GameStepPrompt<T : GameStepData, E> {
 
     context(_: Raise<E>)
     fun process(game: Game, data: T): Either<GameEnd, Game> {
-        return game.applyPrompt(data,this)
+        return game.applyPrompt(data, this)
     }
 
 
@@ -98,7 +96,8 @@ sealed class GameStepPrompt<T : GameStepData, E> {
     }
 
     data object NightEnd : ConfirmationStepPrompt<NightEnd.Info>() {
-        data class Info(val deathsSummary: List<Pair<PlayerName, List<Role>>>) : ConfirmationStepPrompt.Info, GameStepData.MarksPublicKilled {
+        data class Info(val deathsSummary: List<Pair<PlayerName, List<Role>>>) : ConfirmationStepPrompt.Info,
+            GameStepData.MarksPublicKilled {
             override val destination: Destination = Destination.All
 
             override val killed: Set<PlayerName> = deathsSummary.map { it.first }.toSet()
@@ -138,7 +137,7 @@ sealed class GameStepPrompt<T : GameStepData, E> {
     }
 
     data object VillagersKillVote : GameStepPromptChoosePlayer<VillagersKillVote.Data, VillagersKillVote.Errors>() {
-        data class Data(val victim: PlayerName) : GameStepData, GameStepData.MarksPublicKilled{
+        data class Data(val victim: PlayerName) : GameStepData, GameStepData.MarksPublicKilled {
             override val killed = setOf(victim)
         }
 
@@ -159,7 +158,7 @@ sealed class GameStepPrompt<T : GameStepData, E> {
 
     }
 
-    data object HunterKill: GameStepPromptChoosePlayer<HunterKill.Data, HunterKill.Errors>(){
+    data object HunterKill : GameStepPromptChoosePlayer<HunterKill.Data, HunterKill.Errors>() {
         data class Data(val victim: PlayerName) : GameStepData, GameStepData.MarksPublicKilled {
             override val killed = setOf(victim)
         }

@@ -3,11 +3,7 @@ package net.leloubil.werewolvesassistant.modules
 import org.koin.core.annotation.Singleton
 
 
-interface TestRepo {
-
-}
+interface TestRepo
 
 @Singleton
-class TestRepoImpl : TestRepo {
-
-}
+class TestRepoImpl : TestRepo

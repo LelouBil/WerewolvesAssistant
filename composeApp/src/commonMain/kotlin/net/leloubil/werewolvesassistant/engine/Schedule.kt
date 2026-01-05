@@ -1,9 +1,5 @@
 package net.leloubil.werewolvesassistant.engine
 
-import arrow.core.Either
-import arrow.core.left
-import arrow.core.right
-
 val scheduleOrder = listOf(
     GameStepPrompt.NightBegin,
     GameStepPrompt.SeerSee,

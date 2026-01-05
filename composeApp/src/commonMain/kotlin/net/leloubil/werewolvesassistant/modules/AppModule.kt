@@ -6,7 +6,6 @@ import org.koin.core.annotation.KoinApplication
 import org.koin.core.annotation.Module
 
 
-
 @Module
 @ComponentScan("net.leloubil.werewolvesassistant")
 @Configuration

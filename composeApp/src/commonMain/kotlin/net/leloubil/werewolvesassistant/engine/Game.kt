@@ -31,7 +31,7 @@ data class Game(
     private fun scheduleNext(): Either<GameEnd, Game> {
         val game = this
         if (game.steps.last().checkGameEnd) {
-            val livingPlayers = game.players.filter { game.getLivingState(it) is Game.LivingState.Alive }
+            val livingPlayers = game.players.filter { game.getLivingState(it) is LivingState.Alive }
             inline fun <reified T : Role.Team> List<List<Role>>.allOfTeam(): Boolean {
                 return all { it.filterIsInstance<T>().any() }
             }
