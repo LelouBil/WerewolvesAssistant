@@ -5,10 +5,13 @@ import arrow.core.left
 import arrow.core.right
 
 val scheduleOrder = listOf(
-    GameStepPrompt.NightBeginPrompt,
-    GameStepPrompt.WerewolvesKillPrompt,
-    GameStepPrompt.NightEndPrompt,
-    GameStepPrompt.VillagersVotePrompt,
+    GameStepPrompt.NightBegin,
+    GameStepPrompt.SeerSee,
+    GameStepPrompt.SeerShow,
+    GameStepPrompt.WerewolvesKill,
+    GameStepPrompt.NightEnd,
+    GameStepPrompt.MayorElection,
+    GameStepPrompt.VillagersKillVote,
 )
 
 sealed interface ScheduleErrors {
@@ -32,29 +35,6 @@ sealed interface GameEnd {
 
 }
 
-fun scheduleNext(game: Game, step: GameStepPrompt<*, *>): Either<GameEnd, GameStepPrompt<*, *>> {
-    //todo game end
 
 
-    val lastStepIdx = scheduleOrder.indexOf(step)
-    val steps = (scheduleOrder.asSequence().drop(lastStepIdx) + scheduleOrder).firstOrNull { it.exists(game) }
-    return steps?.right() ?: GameEnd.ScheduleError(ScheduleErrors.NoValidStepError).left()
-}
 
-fun nextStep(game: Game, schedStep: GameStepPrompt<*, *>, gameStepData: GameStepData): Game {
-    return when (val nextPrompt = scheduleNext(game, schedStep)) {
-        is Either.Left<GameEnd> -> {
-            game.copy(
-                steps = game.steps + gameStepData,
-                end = nextPrompt.value
-            )
-        }
-
-        is Either.Right<GameStepPrompt<*, *>> -> {
-            game.copy(
-                steps = game.steps + gameStepData,
-                nextPrompt = nextPrompt.value
-            )
-        }
-    }
-}

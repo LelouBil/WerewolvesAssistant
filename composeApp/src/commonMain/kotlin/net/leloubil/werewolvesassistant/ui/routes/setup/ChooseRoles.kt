@@ -50,7 +50,7 @@ fun RolePicker(role: Role?, setRole: (Role) -> Unit) {
     var roleMenuExpanded by remember { mutableStateOf(false) }
     val roleList = listOf(
         Role.Werewolf,
-        Role.Villager
+        Role.SimpleVillager
     )
     Box {
         Text(role?.toString() ?: "Choose Role", modifier = Modifier.clickable { roleMenuExpanded = true })
