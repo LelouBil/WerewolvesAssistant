@@ -5,7 +5,6 @@ import arrow.core.raise.Raise
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.PluralStringResource
 import werewolvesassistant.composeapp.generated.resources.*
-import kotlin.collections.emptyList
 
 
 sealed class GameStepPromptChoosePlayer<T : GameStepData, E> : GameStepPrompt<T, E>() {
@@ -13,7 +12,7 @@ sealed class GameStepPromptChoosePlayer<T : GameStepData, E> : GameStepPrompt<T,
 
     fun getValidPlayers(game: Game): Set<PlayerName> {
         return game.players.filter {
-            this.checkStepData(game, this.createPrompt(it)) == null
+            this.checkStepData(game, this.createPrompt(it)) == null && game.getLivingState(it) is Game.LivingState.Alive
         }.toSet()
     }
 }
@@ -140,13 +139,13 @@ sealed class GameStepPrompt<T : GameStepData, E> {
         override fun exists(game: Game): Boolean = true
         override fun getInfo(game: Game): Info {
             val summary = game.thisNight().fold(emptyList<PlayerName>()) { acc, step ->
-                    when(step){
-                        is GameStepData.NightHiddenKill -> acc + step.hiddenKilled
-                        is GameStepData.MarksPublicKilled -> acc + step.killed
-                        is GameStepData.MarksAlive -> acc - step.alive
-                        else -> acc
-                    }
-                }.map { it to game.getRoles(it) }
+                when (step) {
+                    is GameStepData.NightHiddenKill -> acc + step.hiddenKilled
+                    is GameStepData.MarksPublicKilled -> acc + step.killed
+                    is GameStepData.MarksAlive -> acc - step.alive
+                    else -> acc
+                }
+            }.map { it to game.getRoles(it) }
 
             return Info(summary)
         }

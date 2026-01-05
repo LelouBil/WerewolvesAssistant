@@ -72,8 +72,10 @@ fun NavRoot() {
     val onBack: () -> Unit = { backStack.removeLastOrNull() }
     val navigate: (NavRoutes) -> Unit = { backStack.add(it) }
     Column {
-        Button(onClick = onBack) {
-            Text("Retour")
+        if (backStack.size > 1) {
+            Button(onClick = onBack) {
+                Text("Retour")
+            }
         }
         NavDisplay(
             backStack = backStack,
@@ -145,8 +147,8 @@ fun NavRoot() {
                             navigate(NavRoutes.GameScreen.GameScreenTurn(it))
                         }
                         when (key) {
-                            is NavRoutes.GameScreen.GameScreenStart -> GameScreen(Game(key.players)!!.right(),nextGame)
-                            is NavRoutes.GameScreen.GameScreenTurn -> GameScreen(key.game,nextGame)
+                            is NavRoutes.GameScreen.GameScreenStart -> GameScreen(Game(key.players)!!.right(), nextGame)
+                            is NavRoutes.GameScreen.GameScreenTurn -> GameScreen(key.game, nextGame)
                         }
                     }
                 }

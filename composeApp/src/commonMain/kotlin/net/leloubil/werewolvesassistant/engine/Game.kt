@@ -34,9 +34,10 @@ data class Game private constructor(
 
     sealed interface LivingState {
         data class Alive(val cause: GameStepData.MarksAlive?) : LivingState
-        sealed class Dead: LivingState{
+        sealed class Dead : LivingState {
             abstract val cause: GameStepData
         }
+
         data class PublicDead(override val cause: GameStepData.MarksPublicKilled) : Dead()
         data class NightHiddenDead(override val cause: GameStepData.NightHiddenKill) : Dead()
 
@@ -57,7 +58,10 @@ data class Game private constructor(
 
 
     context(_: Raise<E>)
-    fun <P : GameStepPrompt<T, E>, T : GameStepData, E> removeLastPromptAndApply(data: T, prompt: P): Either<GameEnd, Game> {
+    fun <P : GameStepPrompt<T, E>, T : GameStepData, E> removeLastPromptAndApply(
+        data: T,
+        prompt: P
+    ): Either<GameEnd, Game> {
         val next = nextPrompt
         if (next != prompt) {
             //todo better error
@@ -75,7 +79,12 @@ data class Game private constructor(
     }
 
     private fun scheduleNext(): Either<GameEnd, Game> {
-        val game = this
+        var game = this
+        while (game.nextPrompt?.exists(game) == false) {
+            game = game.copy(
+                nextPrompts = game.nextPrompts.drop(1)
+            )
+        }
 
         val last = game.steps.last()
         if (last is GameStepData.MarksPublicKilled) {
@@ -114,7 +123,7 @@ data class Game private constructor(
         }
 
         if (game.nextPrompts.isEmpty()) {
-            return game.copy(nextPrompts = scheduleOrder.filter { it.exists(game) }).right()
+            return game.copy(nextPrompts = scheduleOrder).right()
         }
         return game.right()
     }
@@ -158,6 +167,7 @@ fun Game.getLivingState(player: PlayerName): Game.LivingState {
             is GameStepData.MarksPublicKilled if it.killed.contains(player) -> {
                 Game.LivingState.PublicDead(it)
             }
+
             is GameStepData.NightHiddenKill if it.hiddenKilled.contains(player) -> {
                 Game.LivingState.NightHiddenDead(it)
             }

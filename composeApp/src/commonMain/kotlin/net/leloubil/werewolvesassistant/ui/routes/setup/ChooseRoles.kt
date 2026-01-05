@@ -4,10 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.material3.Button
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -50,11 +47,12 @@ class ChooseRolesMenuViewModel(@InjectedParam val players: List<PlayerName>) : V
         _assignments.value = players.mapIndexed { idx, playerName -> playerName to allRoles[idx] }
     }
 
-    fun setRoleCount(role: Role, count: UInt) = _counts.update {
-        it + (role to count)
+    fun setRoleCount(role: Role, count: UInt) {
+        _assignments.value = null
+        _counts.update {
+            it + (role to count)
+        }
     }
-
-
 }
 
 @Composable
@@ -142,6 +140,7 @@ private fun RolePicker(role: Role, count: UInt, multiple: Boolean = false, onCou
             }
         } else {
             Button(onClick = { onCountUpdate(role, if (count == 0u) 1u else 0u) }) {
+                Icon(Icons.Default.Check, contentDescription = null)
                 Text(stringResource(if (count == 0u) Res.string.select_roles_add else Res.string.select_roles_remove))
             }
         }

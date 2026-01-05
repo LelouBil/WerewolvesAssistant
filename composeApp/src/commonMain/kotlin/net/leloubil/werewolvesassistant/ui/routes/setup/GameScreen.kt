@@ -4,13 +4,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.lifecycle.ViewModel
 import arrow.core.Either
 import arrow.core.raise.either
-import arrow.core.right
 import net.leloubil.werewolvesassistant.engine.*
-import org.koin.android.annotation.KoinViewModel
-import org.koin.core.annotation.InjectedParam
 
 
 fun <T> Either<Nothing, T>.infaillible(): T = when (this) {
@@ -129,7 +125,7 @@ private fun ChoosePlayerPrompt(
     prompt: GameStepPromptChoosePlayer<*, *>,
     game: Game,
     promptProcessor: ProcessPrompt,
-) {
+) = Column {
     Text(prompt.toString())
     @Composable
     fun <P : GameStepPromptChoosePlayer<D, E>, D : GameStepData, E> PP(prompt: P, data: (PlayerName) -> D) =
@@ -164,7 +160,7 @@ fun <P : GameStepPrompt<D, E>, D : GameStepData, E> PlayerPicker(
     x0.forEach { playerName ->
         Button(
             onClick = {
-                 x1.processPrompt(game, prompt, x2(playerName))?.let {
+                x1.processPrompt(game, prompt, x2(playerName))?.let {
                     error = it
                 }
             }

@@ -14,7 +14,8 @@ import org.koin.core.annotation.InjectedParam
 import werewolvesassistant.composeapp.generated.resources.*
 
 @KoinViewModel
-class PreGameShowRolesViewModel(@InjectedParam val players: RolesList, @InjectedParam val showingIndex: UInt?) : ViewModel() {
+class PreGameShowRolesViewModel(@InjectedParam val players: RolesList, @InjectedParam val showingIndex: UInt?) :
+    ViewModel() {
 
     val currentRole = showingIndex?.let { players[it.toInt()] }
 
