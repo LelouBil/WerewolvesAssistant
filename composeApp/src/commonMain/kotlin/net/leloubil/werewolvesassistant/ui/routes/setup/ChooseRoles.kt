@@ -1,16 +1,22 @@
 package net.leloubil.werewolvesassistant.ui.routes.setup
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
+import androidx.compose.animation.animateColor
+import androidx.compose.animation.core.EaseInOut
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.updateTransition
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -120,7 +126,6 @@ fun ChooseRolesMenu(viewModel: ChooseRolesMenuViewModel, preGame: (RolesList) ->
 
 @Composable
 private fun RolePicker(role: Role, count: UInt, multiple: Boolean = false, onCountUpdate: (Role, UInt) -> Unit) {
-
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -133,18 +138,29 @@ private fun RolePicker(role: Role, count: UInt, multiple: Boolean = false, onCou
             ) {
                 Button(onClick = {
                     onCountUpdate(role, if (count == 0u) 0u else count - 1u)
-                }) {
-                    Text("-")
+                }, enabled = count > 0u) {
+                    Icon(Icons.Default.Remove, null, Modifier.size(20.dp))
                 }
                 Text(count.toString())
                 Button(onClick = { onCountUpdate(role, count + 1u) }) {
-                    Text("+")
+                    Icon(Icons.Default.Add, null, Modifier.size(20.dp))
                 }
             }
         } else {
-            Button(onClick = { onCountUpdate(role, if (count == 0u) 1u else 0u) }) {
-                Icon(Icons.Default.Check, contentDescription = null)
-                Text(stringResource(if (count == 0u) Res.string.select_roles_add else Res.string.select_roles_remove))
+            val transition = updateTransition(targetState = count == 0u)
+            val rotation by transition.animateFloat({ tween(easing = EaseInOut) }) {
+                if (it) 0f else 135f
+            }
+            val color by transition.animateColor({ tween(easing = EaseInOut) }) {
+                if (it) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+            }
+            Button(
+                onClick = { onCountUpdate(role, (count + 1u) % 2u) },
+                colors = ButtonDefaults.buttonColors(containerColor = color)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.graphicsLayer {
+                    rotationZ = rotation
+                }.size(20.dp))
             }
         }
     }
