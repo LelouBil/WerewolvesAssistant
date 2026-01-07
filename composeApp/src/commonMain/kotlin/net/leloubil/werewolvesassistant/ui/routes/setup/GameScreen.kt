@@ -1,9 +1,15 @@
 package net.leloubil.werewolvesassistant.ui.routes.setup
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import arrow.core.Either
 import arrow.core.raise.either
 import net.leloubil.werewolvesassistant.engine.*
@@ -92,18 +98,48 @@ fun GameProcess(
             ChoosePlayerPrompt(prompt, game, promptProcessor)
         }
 
-        is GameStepPrompt.CupidSetLovers -> Column {
-            Text("Cupid Set Lovers") //todo
-            Button(
-                onClick = {
-                    promptProcessor.processPrompt(
-                        game,
-                        prompt,
-                        GameStepPrompt.CupidSetLovers.Data(game.players.first(), game.players.last())
-                    )
+        is GameStepPrompt.CupidSetLovers -> Box {
+            val lovers = remember { mutableStateListOf<PlayerName>() }
+
+            LazyColumn {
+
+                item {
+                    Text("Cupid Set Lovers")
                 }
-            ) {
-                Text("Set") //todo
+
+                items(game.players) { p ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = lovers.contains(p),
+                            onCheckedChange = { checked ->
+                                if (checked) {
+                                    lovers.add(p)
+                                } else {
+                                    lovers.remove(p)
+                                }
+                            },
+                            enabled = lovers.contains(p) || lovers.size < 2
+                        )
+                        Text(p.name)
+                    }
+                }
+
+                item {
+                    Button(
+                        onClick = {
+                            promptProcessor.processPrompt(
+                                game,
+                                prompt,
+                                GameStepPrompt.CupidSetLovers.Data(lovers[0], lovers[1])
+                            )
+                        },
+                        enabled = lovers.size == 2
+                    ) {
+                        Text("Set Lovers")
+                    }
+                }
             }
         }
 
