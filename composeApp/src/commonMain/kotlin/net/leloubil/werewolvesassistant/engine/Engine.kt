@@ -327,8 +327,10 @@ sealed class GameStepPrompt<T : GameStepData, E> {
             data class MayorAlreadyElected(val alreadyElected: PlayerName) : Errors
         }
 
-        private fun alreadyHasMayor(game: Game): PlayerName? =
-            game.steps.asReversed().filterIsInstance<Data>().firstOrNull()?.mayor
+        private fun alreadyHasMayor(game: Game): PlayerName? {
+            val mayor = game.steps.asReversed().filterIsInstance<Data>().firstOrNull()?.mayor
+            return mayor?.let { it.takeIf { game.getLivingState(mayor) is Game.LivingState.Alive } }
+        }
 
         override fun checkStepData(game: Game, data: Data): Errors? {
             val alreadyElected = alreadyHasMayor(game)

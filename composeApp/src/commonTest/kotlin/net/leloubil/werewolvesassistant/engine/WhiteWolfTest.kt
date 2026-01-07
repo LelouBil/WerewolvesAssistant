@@ -48,7 +48,7 @@ class WhiteWolfTest : FunSpec({
         // --- Day 1 ---
         // Left: WW, Wolf, V2, V3, V4, V5 (6 players)
 
-        val mayorElection = either { (game.nextPrompt as GameStepPrompt.MayorElection).process(game, GameStepPrompt.MayorElection.Data(villager1))}.getOrElse { throw IllegalStateException("MayorElection 1") }
+        val mayorElection = either { (game.nextPrompt as GameStepPrompt.MayorElection).process(game, GameStepPrompt.MayorElection.Data(whiteWolf))}.getOrElse { throw IllegalStateException("MayorElection 1") }
         game = mayorElection.shouldBeInstanceOf<Either.Right<Game>>().value
 
         val dayResult1Result = either { (game.nextPrompt as GameStepPrompt.VillagersKillVote).process(game, GameStepPrompt.VillagersKillVote.Data(villager2)) }.getOrElse { throw IllegalStateException("VKV1") }
@@ -123,7 +123,7 @@ class WhiteWolfTest : FunSpec({
         val nightEnd1 = either { GameStepPrompt.NightEnd.process(game) }.getOrElse { throw IllegalStateException("NE1") }
         game = nightEnd1.shouldBeInstanceOf<arrow.core.Either.Right<Game>>().value
 
-        val mayorElection = either { (game.nextPrompt as GameStepPrompt.MayorElection).process(game, GameStepPrompt.MayorElection.Data(villager1))}.getOrElse { throw IllegalStateException("MayorElection 1") }
+        val mayorElection = either { (game.nextPrompt as GameStepPrompt.MayorElection).process(game, GameStepPrompt.MayorElection.Data(whiteWolf))}.getOrElse { throw IllegalStateException("MayorElection 1") }
         game = mayorElection.shouldBeInstanceOf<Either.Right<Game>>().value
 
 

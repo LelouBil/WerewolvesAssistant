@@ -169,6 +169,8 @@ class WitchTest : FunSpec({
             }.getOrElse { throw IllegalStateException("Error processing MayorElection") }
         }
         game = either { (game.nextPrompt as GameStepPrompt.VillagersKillVote).process(game, GameStepPrompt.VillagersKillVote.Data(villager2)).bind() }.getOrElse { throw IllegalStateException("Error processing VillagersKillVote") }
+        //mayor died
+        game = either { (game.nextPrompt as GameStepPrompt.MayorElection).process(game, GameStepPrompt.MayorElection.Data(villager1)).bind() }.getOrElse { throw IllegalStateException("Error processing MayorElection") }
         game = either { GameStepPrompt.NightBegin.process(game).bind() }.getOrElse { throw IllegalStateException() }
         game = either { (game.nextPrompt as GameStepPrompt.WerewolvesKill).process(game, GameStepPrompt.WerewolvesKill.Data(villager1)).bind() }.getOrElse { throw IllegalStateException() }
         game = either { GameStepPrompt.WitchShow.process(game).bind() }.getOrElse { throw IllegalStateException() }

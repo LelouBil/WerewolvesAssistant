@@ -88,22 +88,31 @@ data class Game private constructor(
         }
 
         val last = game.steps.last()
+        val addedSteps = mutableListOf<GameStepPrompt<*,*>>()
         if (last is GameStepData.MarksPublicKilled) {
             val killedPlayers = last.killed
-            if (killedPlayers.map { game.getRoles(it) }.any { it.contains(Role.Hunter) }) {
-                return game.copy(
-                    nextPrompts = listOf(GameStepPrompt.HunterKill) + game.nextPrompts
-                ).right()
+            val killedPlayersRoles = last.killed.flatMap { game.getRoles(it) }
+            if (killedPlayersRoles.contains(Role.Hunter)) {
+                addedSteps.add(GameStepPrompt.HunterKill)
+
             }
+            val mayor = game.steps.asReversed().filterIsInstance<GameStepPrompt.MayorElection.Data>().firstOrNull()
+            if(mayor != null && killedPlayers.contains(mayor.mayor)){
+                addedSteps.add(GameStepPrompt.MayorElection)
+            }
+
             val lovers = game.steps.filterIsInstance<GameStepPrompt.CupidSetLovers.Data>().firstOrNull()
             if (lovers != null && (killedPlayers.contains(lovers.player1) || killedPlayers.contains(lovers.player2))) {
                 if (!killedPlayers.containsAll(setOf(lovers.player1, lovers.player2))) {
                     val other = if (killedPlayers.contains(lovers.player1)) lovers.player2 else lovers.player1
-                    return game.copy(
-                        nextPrompts = listOf(GameStepPrompt.DeathByLove(other)) + game.nextPrompts
-                    ).right()
+                    addedSteps.add(GameStepPrompt.DeathByLove(other))
                 }
             }
+        }
+        if(addedSteps.isNotEmpty()) {
+            return game.copy(
+                nextPrompts = addedSteps + game.nextPrompts
+            ).right()
         }
 
         if (game.steps.last().checkGameEnd) {
