@@ -90,7 +90,8 @@ fun ChooseRolesMenu(viewModel: ChooseRolesMenuViewModel, preGame: (RolesList) ->
                 Role.Seer,
                 Role.Guard,
                 Role.Witch,
-                Role.Cupid
+                Role.Cupid,
+                Role.WhiteWolf
             )
             roles.forEach {
                 RolePicker(it, counts[it] ?: 0u) { role, count -> viewModel.setRoleCount(role, count) }

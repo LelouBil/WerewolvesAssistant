@@ -48,37 +48,41 @@ sealed interface Role {
     val name: PluralStringResource
 
     sealed interface Team {
-        sealed interface VillagersTeam : Team
-        sealed interface WerewolvesTeam : Team
-
+        sealed interface WinsWithVillagers : Team
+        sealed interface WinsWithWolves : Team
     }
+    sealed interface CalledWithWolves: Role
 
-    data object SimpleVillager : Role, Team.VillagersTeam {
+    data object SimpleVillager : Role, Team.WinsWithVillagers {
         override val name: PluralStringResource = Res.plurals.role_villager
     }
 
-    data object Cupid : Role, Team.VillagersTeam {
+    data object Cupid : Role, Team.WinsWithVillagers {
         override val name: PluralStringResource = Res.plurals.role_cupid
     }
 
-    data object Seer : Role, Team.VillagersTeam {
+    data object Seer : Role, Team.WinsWithVillagers {
         override val name: PluralStringResource = Res.plurals.role_seer
     }
 
-    data object Witch : Role, Team.VillagersTeam {
+    data object Witch : Role, Team.WinsWithVillagers {
         override val name: PluralStringResource = Res.plurals.role_witch
     }
 
-    data object Guard : Role, Team.VillagersTeam {
+    data object Guard : Role, Team.WinsWithVillagers {
         override val name: PluralStringResource = Res.plurals.role_guard
     }
 
-    data object Hunter : Role, Team.VillagersTeam {
+    data object Hunter : Role, Team.WinsWithVillagers {
         override val name: PluralStringResource = Res.plurals.role_hunter
     }
 
-    data object Werewolf : Role, Team.WerewolvesTeam {
+    data object Werewolf : Role, Team.WinsWithWolves, CalledWithWolves {
         override val name: PluralStringResource = Res.plurals.role_werewolf
+    }
+
+    data object WhiteWolf : Role, CalledWithWolves {
+        override val name: PluralStringResource = Res.plurals.role_white_wolf
     }
 
 }
@@ -384,10 +388,35 @@ sealed class GameStepPrompt<T : GameStepData, E> {
             override val hiddenKilled = setOf(victim)
         }
 
-        override fun exists(game: Game): Boolean = game.hasAliveRole(Role.Werewolf)
+        override fun exists(game: Game): Boolean = game.hasAliveRole<Role.CalledWithWolves>()
 
         override fun createPrompt(player: PlayerName): Data =
             Data(player)
+
+        sealed interface Errors {
+            data class VictimAlreadyDead(val alreadyDead: PlayerName) : Errors
+        }
+
+        override fun checkStepData(game: Game, data: Data): Errors? {
+            if (game.getLivingState(data.victim) is Game.LivingState.Dead) {
+                return Errors.VictimAlreadyDead(data.victim)
+            }
+            return null
+        }
+    }
+
+    data object WhiteWolfKill : GameStepPromptChoosePlayer<WhiteWolfKill.Data, WhiteWolfKill.Errors>() {
+        data class Data(val victim: PlayerName) : GameStepData, GameStepData.NightHiddenKill {
+            override val hiddenKilled = setOf(victim)
+        }
+
+        override fun exists(game: Game): Boolean {
+            if (!game.hasAliveRole(Role.WhiteWolf)) return false
+            val nightCount = game.steps.count { it is NightBegin.Info }
+            return nightCount % 2 == 0
+        }
+
+        override fun createPrompt(player: PlayerName): Data = Data(player)
 
         sealed interface Errors {
             data class VictimAlreadyDead(val alreadyDead: PlayerName) : Errors

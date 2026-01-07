@@ -140,6 +140,7 @@ private fun ChoosePlayerPrompt(
         is GameStepPrompt.GuardProtect -> PP(prompt, GameStepPrompt.GuardProtect::Data)
         is GameStepPrompt.SeerSee -> PP(prompt, GameStepPrompt.SeerSee::Data)
         is GameStepPrompt.WerewolvesKill -> PP(prompt, GameStepPrompt.WerewolvesKill::Data)
+        is GameStepPrompt.WhiteWolfKill -> PP(prompt, GameStepPrompt.WhiteWolfKill::Data)
         is GameStepPrompt.HunterKill -> PP(prompt, GameStepPrompt.HunterKill::Data)
         is GameStepPrompt.MayorElection -> PP(prompt, GameStepPrompt.MayorElection::Data)
         is GameStepPrompt.VillagersKillVote -> PP(prompt, GameStepPrompt.VillagersKillVote::Data)

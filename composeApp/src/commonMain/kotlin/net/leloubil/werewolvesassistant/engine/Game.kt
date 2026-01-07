@@ -14,6 +14,7 @@ private val scheduleOrder = listOf(
     GameStepPrompt.SeerSee,
     GameStepPrompt.SeerShow,
     GameStepPrompt.WerewolvesKill,
+    GameStepPrompt.WhiteWolfKill,
     GameStepPrompt.GuardResurrect,
     GameStepPrompt.WitchShow,
     GameStepPrompt.WitchStep,
@@ -60,7 +61,7 @@ data class Game private constructor(
     context(_: Raise<E>)
     fun <P : GameStepPrompt<T, E>, T : GameStepData, E> removeLastPromptAndApply(
         data: T,
-        prompt: P
+        prompt: P,
     ): Either<GameEnd, Game> {
         val next = nextPrompt
         if (next != prompt) {
@@ -114,10 +115,15 @@ data class Game private constructor(
                     return GameEnd.LoversWon(lovers.player1, lovers.player2).left()
                 }
             }
+            val singleLiving = livingPlayers.singleOrNull()
+            if (singleLiving != null) {
+                if (game.getRoles(singleLiving).contains(Role.WhiteWolf))
+                    return GameEnd.WhiteWolfWon(singleLiving).left()
+            }
 
-            if (livingPlayers.map { game.getRoles(it) }.allOfTeam<Role.Team.VillagersTeam>()) {
+            if (livingPlayers.map { game.getRoles(it) }.allOfTeam<Role.Team.WinsWithVillagers>()) {
                 return GameEnd.VillagersWon(livingPlayers.toSet()).left()
-            } else if (livingPlayers.map { game.getRoles(it) }.allOfTeam<Role.Team.WerewolvesTeam>()) {
+            } else if (livingPlayers.map { game.getRoles(it) }.allOfTeam<Role.Team.WinsWithWolves>()) {
                 return GameEnd.WerewolvesWon(livingPlayers.toSet()).left()
             }
         }
@@ -146,6 +152,10 @@ sealed interface GameEnd {
         override val winningPlayers: Set<PlayerName> = setOf(lover1, lover2)
     }
 
+    data class WhiteWolfWon(val whiteWolf: PlayerName) : GameEnd {
+        override val winningPlayers: Set<PlayerName> = setOf(whiteWolf)
+    }
+
 }
 
 inline fun <reified D : GameStepData> Game.getLast(): D? {
@@ -154,6 +164,10 @@ inline fun <reified D : GameStepData> Game.getLast(): D? {
 
 inline fun <reified T : Role> Game.hasAliveRole(role: T): Boolean {
     return players.any { p -> getRoles(p).contains(role) && getLivingState(p) is Game.LivingState.Alive }
+}
+
+inline fun <reified T : Role> Game.hasAliveRole(): Boolean {
+    return players.any { p -> getRoles(p).filterIsInstance<T>().any() && getLivingState(p) is Game.LivingState.Alive }
 }
 
 fun Game.getRoles(player: PlayerName): List<Role> =

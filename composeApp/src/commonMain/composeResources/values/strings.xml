@@ -30,6 +30,10 @@
         <item quantity="one">Cupidon</item>
         <item quantity="other">Cupidons</item>
     </plurals>
+    <plurals name="role_white_wolf">
+        <item quantity="one">Loup-garou blanc</item>
+        <item quantity="other">Loups-garous blancs</item>
+    </plurals>
     <!-- endregion -->
 
     <!-- region team names -->
