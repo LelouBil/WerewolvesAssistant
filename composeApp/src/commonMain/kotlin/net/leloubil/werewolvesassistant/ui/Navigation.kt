@@ -5,11 +5,10 @@
 package net.leloubil.werewolvesassistant.ui
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.ui.NavDisplay
@@ -24,11 +23,14 @@ import net.leloubil.werewolvesassistant.engine.Game
 import net.leloubil.werewolvesassistant.engine.GameEnd
 import net.leloubil.werewolvesassistant.engine.PlayerName
 import net.leloubil.werewolvesassistant.engine.RolesList
+import net.leloubil.werewolvesassistant.modules.MusicService
+import net.leloubil.werewolvesassistant.modules.TrackInfo.UrlTrack
 import net.leloubil.werewolvesassistant.ui.routes.MainMenu
 import net.leloubil.werewolvesassistant.ui.routes.setup.ChoosePlayersMenu
 import net.leloubil.werewolvesassistant.ui.routes.setup.ChooseRolesMenu
 import net.leloubil.werewolvesassistant.ui.routes.setup.GameScreen
 import net.leloubil.werewolvesassistant.ui.routes.setup.PreGameShowRoles
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -77,6 +79,7 @@ fun NavRoot() {
                 Text("Retour")
             }
         }
+        MusicPlayer()
         NavDisplay(
             backStack = backStack,
             onBack = onBack,
@@ -155,4 +158,36 @@ fun NavRoot() {
             }
         )
     }
+}
+
+@Composable
+fun MusicPlayer() = Row {
+    val player = koinInject<MusicService>()
+    Text(text = "Music Player")
+    val playerState by player.status.collectAsState()
+    Text(playerState.toString())
+
+//    when (playerState) {
+//        is MusicStatus.NoMusic -> {
+    Button(onClick = {
+        player.playReplacing(UrlTrack("https://www.audiocheck.net/Audio/audiocheck.net_welcome.mp3"))
+    }) {
+        Text("Play")
+    }
+//        }
+//
+//        is MusicStatus.HasMusic -> {
+    Button(onClick = {
+        player.pause()
+    }) {
+        Text("Pause")
+    }
+    Button(onClick = {
+        player.resume()
+    }) {
+        Text("Resume")
+    }
+//        }
+//    }
+
 }

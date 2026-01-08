@@ -1,6 +1,5 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -11,6 +10,7 @@ plugins {
     alias(libs.plugins.kotlinPluginSerialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.kotest)
+    alias(libs.plugins.vlcSetup)
 }
 
 kotlin {
@@ -55,6 +55,7 @@ kotlin {
             implementation(libs.bundles.kotlinxEcosystem)
             implementation(libs.bundles.koin)
             implementation(libs.klogging)
+            implementation(libs.mediaPlayer)
         }
         commonTest.dependencies {
             implementation(libs.bundles.kotest)
@@ -73,6 +74,10 @@ kotlin {
         }
 
     }
+}
+
+ksp {
+    arg("KOIN_CONFIG_CHECK","true")
 }
 
 android {
@@ -119,16 +124,31 @@ tasks.withType<Test>().configureEach {
 }
 
 
+val desktopAssetsDir = rootDir.resolve("assets")
 compose.desktop {
     application {
         mainClass = "net.leloubil.werewolvesassistant.MainKt"
+        jvmArgs += "--add-opens=java.base/java.nio=ALL-UNNAMED"
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "net.leloubil.werewolvesassistant"
             packageVersion = "1.0.0"
+            appResourcesRootDir = desktopAssetsDir
         }
     }
+}
+
+tasks.withType<JavaExec> {
+    systemProperty("compose.application.resources.dir", file("appResources").absolutePath)
+}
+vlcSetup {
+    vlcVersion = "3.0.21"
+    shouldCompressVlcFiles = true
+    shouldIncludeAllVlcFiles = false
+    pathToCopyVlcLinuxFilesTo = desktopAssetsDir.resolve("linux-x64/")
+    pathToCopyVlcMacosFilesTo = desktopAssetsDir.resolve("macos-arm64/")
+    pathToCopyVlcWindowsFilesTo =  desktopAssetsDir.resolve("windows-x64/")
 }
 
 // Trigger Common Metadata Generation from Native tasks

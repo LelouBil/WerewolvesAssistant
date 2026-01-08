@@ -25,6 +25,11 @@ dependencyResolutionManagement {
             }
         }
         mavenCentral()
+        maven("https://jogamp.org/deployment/maven/") {
+            mavenContent {
+                includeGroupAndSubgroups("org.jogamp")
+            }
+        }
     }
 }
 
