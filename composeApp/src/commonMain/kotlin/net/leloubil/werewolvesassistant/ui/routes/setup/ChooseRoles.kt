@@ -1,6 +1,5 @@
 package net.leloubil.werewolvesassistant.ui.routes.setup
 
-import androidx.compose.animation.animateColor
 import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.tween
@@ -18,7 +17,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel

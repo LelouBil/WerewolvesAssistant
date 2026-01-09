@@ -2,14 +2,10 @@ package net.leloubil.werewolvesassistant.ui.routes.setup
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.text.input.TextFieldState
-import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.ViewModel
-import arrow.optics.typeclasses.Index
-import arrow.optics.updateCopy
 import com.composeunstyled.Text
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,7 +24,6 @@ class ChoosePlayersMenuViewModel : ViewModel() {
     //todo keep players from last game
     private val _playersRoles: MutableStateFlow<List<TextFieldState>> = MutableStateFlow(emptyList())
     val playersRoles = _playersRoles.asStateFlow()
-
 
 
     fun remove(idx: Int) = _playersRoles.update {

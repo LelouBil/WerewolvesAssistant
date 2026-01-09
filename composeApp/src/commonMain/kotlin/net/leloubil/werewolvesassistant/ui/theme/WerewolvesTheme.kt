@@ -85,16 +85,20 @@ data class ColorScheme(
 private val defaultColorScheme = ColorScheme(
     background = ColorSet(
 //        background = Color(0xFF813434),
-        background = ColorOrBrush.BrushValue(ShaderBrush(makeNoiseShader(
-            freqX = 0.05f,
-            freqY = 0.05f,
-            numOctaves = 100,
-            seed = 0.5f,
-            lerp1 = Color(0xFF813434),
-            lerp2 = Color(0xFF813434),
+        background = ColorOrBrush.BrushValue(
+            ShaderBrush(
+                makeNoiseShader(
+                    freqX = 0.05f,
+                    freqY = 0.05f,
+                    numOctaves = 100,
+                    seed = 0.5f,
+                    lerp1 = Color(0xFF813434),
+                    lerp2 = Color(0xFF813434),
 //            lerp2 = Color.Black,
-            lerpOffset = .42f
-        ))),
+                    lerpOffset = .42f
+                )
+            )
+        ),
         content = Color(0xFFD7B893),
         textSelection = TextSelectionColors(
             handleColor = Color.Blue,

@@ -1,10 +1,8 @@
 package net.leloubil.werewolvesassistant.ui.theme
 
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.dp
 import com.composeunstyled.Text
@@ -19,13 +17,15 @@ fun Button(
     colorSet: ColorSet = LocalAccentColorSet.current,
     content: @Composable () -> Unit
 ) = ProvideContentColorSet(colorSet) {
-    UnstyledButton(onClick,
+    UnstyledButton(
+        onClick,
         modifier = it.then(modifier),
         contentPadding = PaddingValues(Theme.spacing.small),
         shape = RectangleShape,
         borderColor = colorSet.content,
         borderWidth = 1.dp,
-        enabled = enabled) {
+        enabled = enabled
+    ) {
         content()
     }
 }

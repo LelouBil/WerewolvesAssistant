@@ -1,6 +1,5 @@
 package net.leloubil.werewolvesassistant.ui.theme
 
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -8,7 +7,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.composeunstyled.Icon
-import com.composeunstyled.Text
 import com.composeunstyled.UnstyledCheckbox
 
 @Composable
