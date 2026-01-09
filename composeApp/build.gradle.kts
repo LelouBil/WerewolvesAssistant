@@ -11,12 +11,18 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.kotest)
     alias(libs.plugins.vlcSetup)
+    alias(libs.plugins.detekt)
+}
+
+detekt {
+    buildUponDefaultConfig = true // preconfigure defaults
+    config.setFrom("$rootDir/composeApp/config/detekt.yml")
 }
 
 kotlin {
     androidTarget {
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_11)
+            jvmTarget.set(JvmTarget.JVM_17)
         }
     }
 
@@ -45,7 +51,8 @@ kotlin {
         commonMain.dependencies {
             implementation(compose.runtime)
             implementation(compose.foundation)
-            implementation(compose.material3)
+//            implementation(compose.material3)
+            implementation(libs.bundles.unstyled)
             implementation(compose.ui)
             implementation(compose.materialIconsExtended)
             implementation(compose.components.resources)
@@ -75,6 +82,8 @@ kotlin {
 
     }
 }
+
+
 
 ksp {
     arg("KOIN_CONFIG_CHECK","true")

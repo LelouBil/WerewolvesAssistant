@@ -4,7 +4,15 @@ import arrow.core.Either
 import arrow.core.raise.Raise
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.PluralStringResource
-import werewolvesassistant.composeapp.generated.resources.*
+import werewolvesassistant.composeapp.generated.resources.Res
+import werewolvesassistant.composeapp.generated.resources.role_cupid
+import werewolvesassistant.composeapp.generated.resources.role_guard
+import werewolvesassistant.composeapp.generated.resources.role_hunter
+import werewolvesassistant.composeapp.generated.resources.role_seer
+import werewolvesassistant.composeapp.generated.resources.role_villager
+import werewolvesassistant.composeapp.generated.resources.role_werewolf
+import werewolvesassistant.composeapp.generated.resources.role_white_wolf
+import werewolvesassistant.composeapp.generated.resources.role_witch
 
 
 sealed class GameStepPromptChoosePlayer<T : GameStepData, E> : GameStepPrompt<T, E>() {
@@ -51,7 +59,8 @@ sealed interface Role {
         sealed interface WinsWithVillagers : Team
         sealed interface WinsWithWolves : Team
     }
-    sealed interface CalledWithWolves: Role
+
+    sealed interface CalledWithWolves : Role
 
     data object SimpleVillager : Role, Team.WinsWithVillagers {
         override val name: PluralStringResource = Res.plurals.role_villager

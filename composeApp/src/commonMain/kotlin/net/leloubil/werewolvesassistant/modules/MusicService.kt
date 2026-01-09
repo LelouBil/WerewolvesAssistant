@@ -1,6 +1,5 @@
 package net.leloubil.werewolvesassistant.modules
 
-import androidx.compose.material.icons.Icons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -75,18 +74,18 @@ class MusicServiceImpl(private val context: ContextWrapper) : MusicService {
     override fun setLooping(isLooping: Boolean) {
         _isLooping.value = isLooping
     }
+
     init {
         println("ha")
         scope.launch {
             player.playbackState.collect {
-                if(it == PlaybackState.FINISHED){
+                if (it == PlaybackState.FINISHED) {
                     player.seekTo(0)
                     player.resume()
                 }
             }
         }
     }
-
 
 
     override val status: StateFlow<MusicStatus> = combine(
@@ -119,7 +118,7 @@ class MusicServiceImpl(private val context: ContextWrapper) : MusicService {
     }
 
     override fun pause() {
-        if(player.playbackState.value == PlaybackState.PLAYING) {
+        if (player.playbackState.value == PlaybackState.PLAYING) {
             player.pause()
         }
     }

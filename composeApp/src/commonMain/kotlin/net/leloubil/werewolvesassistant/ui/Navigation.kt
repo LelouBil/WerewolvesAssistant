@@ -6,9 +6,16 @@ package net.leloubil.werewolvesassistant.ui
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.ui.NavDisplay
@@ -16,6 +23,7 @@ import androidx.savedstate.serialization.SavedStateConfiguration
 import arrow.core.Either
 import arrow.core.right
 import arrow.core.serialization.EitherSerializer
+import com.composeunstyled.Text
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 import kotlinx.serialization.modules.SerializersModule
@@ -30,6 +38,7 @@ import net.leloubil.werewolvesassistant.ui.routes.setup.ChoosePlayersMenu
 import net.leloubil.werewolvesassistant.ui.routes.setup.ChooseRolesMenu
 import net.leloubil.werewolvesassistant.ui.routes.setup.GameScreen
 import net.leloubil.werewolvesassistant.ui.routes.setup.PreGameShowRoles
+import net.leloubil.werewolvesassistant.ui.theme.Button
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -69,18 +78,19 @@ private val config = SavedStateConfiguration {
 }
 
 @Composable
-fun NavRoot() {
+fun NavRoot(modifier: Modifier) {
     val backStack = remember { mutableStateListOf<NavRoutes>(NavRoutes.MainScreen) }
     val onBack: () -> Unit = { backStack.removeLastOrNull() }
     val navigate: (NavRoutes) -> Unit = { backStack.add(it) }
-    Column {
-        if (backStack.size > 1) {
-            Button(onClick = onBack) {
+    Column(modifier) {
+        AppBar(modifier = Modifier.height(30.dp)) {
+            Button(onClick = onBack, enabled = backStack.size > 1) {
                 Text("Retour")
             }
+            MusicPlayer()
         }
-        MusicPlayer()
         NavDisplay(
+            modifier = Modifier.fillMaxSize(),
             backStack = backStack,
             onBack = onBack,
             entryProvider = { key ->
@@ -161,7 +171,7 @@ fun NavRoot() {
 }
 
 @Composable
-fun MusicPlayer() = Row {
+fun MusicPlayer() = Row(verticalAlignment = Alignment.CenterVertically) {
     val player = koinInject<MusicService>()
     Text(text = "Music Player")
     val playerState by player.status.collectAsState()

@@ -5,31 +5,42 @@ import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
+import com.composeunstyled.Icon
+import com.composeunstyled.Text
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import net.leloubil.werewolvesassistant.engine.PlayerName
 import net.leloubil.werewolvesassistant.engine.Role
 import net.leloubil.werewolvesassistant.engine.RolesList
+import net.leloubil.werewolvesassistant.ui.theme.Button
+import net.leloubil.werewolvesassistant.ui.theme.HorizontalDivider
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.android.annotation.KoinViewModel
 import org.koin.core.annotation.InjectedParam
-import werewolvesassistant.composeapp.generated.resources.*
+import werewolvesassistant.composeapp.generated.resources.Res
+import werewolvesassistant.composeapp.generated.resources.select_roles_continue
+import werewolvesassistant.composeapp.generated.resources.select_roles_randomize
+import werewolvesassistant.composeapp.generated.resources.select_roles_subtitle
+import werewolvesassistant.composeapp.generated.resources.select_roles_title
 
 
 @KoinViewModel
@@ -68,8 +79,10 @@ fun ChooseRolesMenu(viewModel: ChooseRolesMenuViewModel, preGame: (RolesList) ->
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         val counts by viewModel.counts.collectAsState()
 
-        Text(stringResource(Res.string.select_roles_title), style = MaterialTheme.typography.titleLarge)
-        Text(stringResource(Res.string.select_roles_subtitle), style = MaterialTheme.typography.titleSmall)
+//        Text(stringResource(Res.string.select_roles_title), style = MaterialTheme.typography.titleLarge)
+//        Text(stringResource(Res.string.select_roles_subtitle), style = MaterialTheme.typography.titleSmall)
+        Text(stringResource(Res.string.select_roles_title))
+        Text(stringResource(Res.string.select_roles_subtitle))
 
         Text("${counts.values.sum()} / ${viewModel.players.size}")
 
@@ -151,12 +164,12 @@ private fun RolePicker(role: Role, count: UInt, multiple: Boolean = false, onCou
             val rotation by transition.animateFloat({ tween(easing = EaseInOut) }) {
                 if (it) 0f else 135f
             }
-            val color by transition.animateColor({ tween(easing = EaseInOut) }) {
-                if (it) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-            }
+//            val color by transition.animateColor({ tween(easing = EaseInOut) }) {
+//                if (it) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+//            }
             Button(
                 onClick = { onCountUpdate(role, (count + 1u) % 2u) },
-                colors = ButtonDefaults.buttonColors(containerColor = color)
+//                colors = ButtonDefaults.buttonColors(containerColor = color)
             ) {
                 Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.graphicsLayer {
                     rotationZ = rotation

@@ -13,9 +13,10 @@ composeHotReload = "1.0.0"
 composeMultiplatform = "1.9.3"
 kotlin = "2.3.0"
 kotlinx-coroutines = "1.10.2"
+detekt = "1.23.8"
 
 nav3ui = "1.1.0-alpha01"
-nav3materialAdaptive = "1.3.0-alpha03"
+#nav3materialAdaptive = "1.3.0-alpha03"
 nav3lifeCycleViewModel = "2.10.0-alpha07"
 
 arrow = "2.2.1.1"
@@ -26,6 +27,7 @@ koin = "4.2.0-beta2"
 koin-annotations = "2.3.2-Beta1"
 klogging = "0.11.7"
 ksp = "2.3.4"
+composeUnstyled = "1.49.5"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidx-core" }
@@ -38,7 +40,7 @@ androidx-lifecycle-runtimeCompose = { module = "org.jetbrains.androidx.lifecycle
 
 androidx-navigation3-ui = { module = "org.jetbrains.androidx.navigation3:navigation3-ui", version.ref = "nav3ui" }
 androidx-lifecycle-viewmodel-navigation3 = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "nav3lifeCycleViewModel" }
-androidx-material3-adaptive-navigation3 = { group = "org.jetbrains.compose.material3.adaptive", name = "adaptive-navigation3", version.ref = "nav3materialAdaptive" }
+#androidx-material3-adaptive-navigation3 = { group = "org.jetbrains.compose.material3.adaptive", name = "adaptive-navigation3", version.ref = "nav3materialAdaptive" }
 
 kotlinx-coroutinesSwing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "kotlinx-coroutines" }
 
@@ -70,8 +72,14 @@ kotlinxSerialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-j
 kotlinxCoroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 mediaPlayer = { module = "org.openani.mediamp:mediamp-all", version = "0.0.30" }
 
+unstyled = { module = "com.composables:composeunstyled", version.ref = "composeUnstyled"}
+unstyled-theming = { module = "com.composables:composeunstyled-theming", version.ref = "composeUnstyled"}
+unstyled-primitives = { module = "com.composables:composeunstyled-primitives", version.ref = "composeUnstyled"}
+unstyled-platformTheme = { module = "com.composables:composeunstyled-platformtheme", version.ref = "composeUnstyled"}
+
 
 [bundles]
+unstyled = ["unstyled", "unstyled-theming", "unstyled-primitives", "unstyled-platformTheme"]
 kotlinxEcosystem = ["kotlinxDatetime", "kotlinxSerialization", "kotlinxCoroutines"]
 arrow  = ["arrow-core", "arrow-fxCoroutines", "arrow-resilience", "arrow-optics","arrow-optics-compose","arrow-core-serialization"]
 kotest = ["kotest-assertions-core", "kotest-assertions-arrow", "kotest-property", "kotest-property-arrow"]
@@ -81,7 +89,7 @@ androidx-multiplatform = [
     "androidx-lifecycle-viewmodelCompose",
     "androidx-navigation3-ui",
     "androidx-lifecycle-viewmodel-navigation3",
-    "androidx-material3-adaptive-navigation3",
+#    "androidx-material3-adaptive-navigation3",
 ]
 
 [plugins]
@@ -95,3 +103,4 @@ kotlinPluginSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", 
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 kotest = { id = "io.kotest", version.ref = "kotest"}
 vlcSetup = { id = "ir.mahozad.vlc-setup", version = "0.1.0"}
+detekt = {id = "io.gitlab.arturbosch.detekt", version.ref = "detekt"}

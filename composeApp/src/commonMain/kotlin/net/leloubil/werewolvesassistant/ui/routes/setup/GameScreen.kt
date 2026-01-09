@@ -1,18 +1,31 @@
 package net.leloubil.werewolvesassistant.ui.routes.setup
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import arrow.core.Either
 import arrow.core.raise.either
-import net.leloubil.werewolvesassistant.engine.*
+import com.composeunstyled.Icon
+import com.composeunstyled.Text
+import net.leloubil.werewolvesassistant.engine.ConfirmationStepPrompt
+import net.leloubil.werewolvesassistant.engine.Game
+import net.leloubil.werewolvesassistant.engine.GameEnd
+import net.leloubil.werewolvesassistant.engine.GameStepData
+import net.leloubil.werewolvesassistant.engine.GameStepPrompt
+import net.leloubil.werewolvesassistant.engine.GameStepPromptChoosePlayer
+import net.leloubil.werewolvesassistant.engine.PlayerName
+import net.leloubil.werewolvesassistant.ui.icons.MaterialSymbolsSkull
+import net.leloubil.werewolvesassistant.ui.theme.Button
+import net.leloubil.werewolvesassistant.ui.theme.Checkbox
 
 
 fun <T> Either<Nothing, T>.infaillible(): T = when (this) {
@@ -98,61 +111,90 @@ fun GameProcess(
             ChoosePlayerPrompt(prompt, game, promptProcessor)
         }
 
-        is GameStepPrompt.CupidSetLovers -> Box {
+        is GameStepPrompt.CupidSetLovers -> Column {
             val lovers = remember { mutableStateListOf<PlayerName>() }
 
-            LazyColumn {
+            Text("Cupid Set Lovers")
 
-                item {
-                    Text("Cupid Set Lovers")
-                }
-
-                items(game.players) { p ->
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Checkbox(
-                            checked = lovers.contains(p),
-                            onCheckedChange = { checked ->
-                                if (checked) {
-                                    lovers.add(p)
-                                } else {
-                                    lovers.remove(p)
-                                }
-                            },
-                            enabled = lovers.contains(p) || lovers.size < 2
-                        )
-                        Text(p.name)
-                    }
-                }
-
-                item {
-                    Button(
-                        onClick = {
-                            promptProcessor.processPrompt(
-                                game,
-                                prompt,
-                                GameStepPrompt.CupidSetLovers.Data(lovers[0], lovers[1])
-                            )
+            game.players.forEach { p ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = lovers.contains(p),
+                        onCheckedChange = { checked ->
+                            if (checked) {
+                                lovers.add(p)
+                            } else {
+                                lovers.remove(p)
+                            }
                         },
-                        enabled = lovers.size == 2
-                    ) {
-                        Text("Set Lovers")
-                    }
+                        enabled = lovers.contains(p) || lovers.size < 2
+                    )
+                    Text(p.name)
                 }
             }
-        }
 
-        is GameStepPrompt.WitchStep -> Column {
-            Text("Witch Step") //todo
             Button(
                 onClick = {
-                    promptProcessor.processPrompt(game, prompt, GameStepPrompt.WitchStep.Data.Skip)
-                }
+                    promptProcessor.processPrompt(
+                        game,
+                        prompt,
+                        GameStepPrompt.CupidSetLovers.Data(lovers[0], lovers[1])
+                    )
+                },
+                enabled = lovers.size == 2
             ) {
-                Text("Skip")
+                Text("Set Lovers")
             }
         }
+
+        is GameStepPrompt.WitchStep -> WitchStep(promptProcessor, game, prompt)
+    }
+}
+
+private enum class WitchAction {
+    Heal,
+    Kill,
+    Skip
+}
+
+@Composable
+private fun WitchStep(
+    promptProcessor: ProcessPrompt,
+    game: Game,
+    prompt: GameStepPrompt.WitchStep
+) = Column {
+    Text("Witch Step") //todo
+
+    var action by remember { mutableStateOf<WitchAction?>(null) }
+
+    Row {
+        Button(
+            onClick = {
+                action = WitchAction.Heal
+            },
+            enabled = false // TODO trouver si joueur à soigner
+        ) {
+            Icon(Icons.Default.Add, null)
+        }
+        Button(
+            onClick = {
+                action = WitchAction.Kill
+            },
+        ) {
+            Icon(MaterialSymbolsSkull, null)
+        }
+
+        Button(
+            onClick = {
+                action = WitchAction.Skip
+            }
+        ) {
+            Icon(Icons.Default.Close, null)
+        }
+
+        Text(action?.toString() ?: "No action selected")
     }
 }
 

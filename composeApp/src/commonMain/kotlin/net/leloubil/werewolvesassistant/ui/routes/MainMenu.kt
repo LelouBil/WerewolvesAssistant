@@ -1,9 +1,9 @@
 package net.leloubil.werewolvesassistant.ui.routes
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import com.composeunstyled.Text
+import net.leloubil.werewolvesassistant.ui.theme.Button
 import org.jetbrains.compose.resources.stringResource
 import werewolvesassistant.composeapp.generated.resources.Res
 import werewolvesassistant.composeapp.generated.resources.create_game_button

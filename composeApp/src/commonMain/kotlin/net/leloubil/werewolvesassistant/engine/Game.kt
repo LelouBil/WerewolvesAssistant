@@ -88,7 +88,7 @@ data class Game private constructor(
         }
 
         val last = game.steps.last()
-        val addedSteps = mutableListOf<GameStepPrompt<*,*>>()
+        val addedSteps = mutableListOf<GameStepPrompt<*, *>>()
         if (last is GameStepData.MarksPublicKilled) {
             val killedPlayers = last.killed
             val killedPlayersRoles = last.killed.flatMap { game.getRoles(it) }
@@ -97,7 +97,7 @@ data class Game private constructor(
 
             }
             val mayor = game.steps.asReversed().filterIsInstance<GameStepPrompt.MayorElection.Data>().firstOrNull()
-            if(mayor != null && killedPlayers.contains(mayor.mayor)){
+            if (mayor != null && killedPlayers.contains(mayor.mayor)) {
                 addedSteps.add(GameStepPrompt.MayorElection)
             }
 
@@ -109,7 +109,7 @@ data class Game private constructor(
                 }
             }
         }
-        if(addedSteps.isNotEmpty()) {
+        if (addedSteps.isNotEmpty()) {
             return game.copy(
                 nextPrompts = addedSteps + game.nextPrompts
             ).right()
