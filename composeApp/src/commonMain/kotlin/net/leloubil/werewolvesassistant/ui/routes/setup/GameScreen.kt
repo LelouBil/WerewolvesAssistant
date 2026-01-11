@@ -165,8 +165,6 @@ private fun WitchStep(
     game: Game,
     prompt: GameStepPrompt.WitchStep
 ) = Column {
-    Text("Witch Step") //todo
-
     var action by remember { mutableStateOf<WitchAction?>(null) }
 
     Row {
@@ -182,6 +180,7 @@ private fun WitchStep(
             onClick = {
                 action = WitchAction.Kill
             },
+            enabled = false // TODO afficher liste des joueurs à tuer
         ) {
             Icon(MaterialSymbolsSkull, null)
         }
@@ -195,6 +194,45 @@ private fun WitchStep(
         }
 
         Text(action?.toString() ?: "No action selected")
+    }
+
+    Button(
+        onClick = {
+            when (action) {
+                WitchAction.Heal -> {
+                    // TODO data avec le joueur à soigner
+//                    promptProcessor.processPrompt(
+//                        game,
+//                        prompt,
+//                        GameStepPrompt.WitchStep.Data.Heal(/* playerName */)
+//                    )
+                }
+
+                WitchAction.Kill -> {
+                    // TODO data avec le joueur à tuer
+//                    promptProcessor.processPrompt(
+//                        game,
+//                        prompt,
+//                        GameStepPrompt.WitchStep.Data.Kill(/* playerName */)
+//                    )
+                }
+
+                WitchAction.Skip -> {
+                    promptProcessor.processPrompt(
+                        game,
+                        prompt,
+                        GameStepPrompt.WitchStep.Data.Skip
+                    )
+                }
+
+                null -> {
+                    // no action selected
+                }
+            }
+        },
+        enabled = action != null
+    ) {
+        Text("Confirm")
     }
 }
 

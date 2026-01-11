@@ -9,7 +9,7 @@ import androidx.compose.ui.draw.clip
 @Composable
 fun Surface(colorSet: ColorSet, accent: ColorSet, modifier: Modifier = Modifier, content: @Composable () -> Unit) =
     ProvideContentColorSet(colorSet, accentColor = accent) {
-        Box(it.then(modifier).clip(Theme.shapes.surface),) {
+        Box(it.then(modifier).clip(Theme.shapes.surface)) {
             content()
         }
     }

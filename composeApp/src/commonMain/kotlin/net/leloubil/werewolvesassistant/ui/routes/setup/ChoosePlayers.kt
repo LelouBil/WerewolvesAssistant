@@ -1,6 +1,7 @@
 package net.leloubil.werewolvesassistant.ui.routes.setup
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -48,7 +50,7 @@ import kotlin.time.Duration.Companion.milliseconds
 class ChoosePlayersMenuViewModel : ViewModel() {
 
     //todo keep players from last game
-    private val _playersRoles: MutableStateFlow<List<Pair<Int,TextFieldState>>> = MutableStateFlow(emptyList())
+    private val _playersRoles: MutableStateFlow<List<Pair<Int, TextFieldState>>> = MutableStateFlow(emptyList())
     val playersRoles = _playersRoles.asStateFlow()
 
 
@@ -64,13 +66,23 @@ class ChoosePlayersMenuViewModel : ViewModel() {
 fun ChoosePlayersMenu(setRoles: (List<PlayerName>) -> Unit, viewModel: ChoosePlayersMenuViewModel = koinViewModel()) =
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.padding(vertical = Theme.spacing.small)
+        modifier = Modifier.padding(vertical = Theme.spacing.small).fillMaxHeight()
     ) {
-        Text("Create Game", style = Theme.typography.title)
         val players by viewModel.playersRoles.collectAsState()
+        val scrollState = rememberScrollState()
+
+        Text("Create Game", style = Theme.typography.title)
+
         HorizontalDivider()
-        LazyColumn {
-            items(players.toList(), key = {(idx,_) -> idx}) { (id, textFieldState) ->
+
+        LazyColumn(
+            Modifier.scrollable(
+                scrollState,
+                orientation = androidx.compose.foundation.gestures.Orientation.Vertical
+            ).weight(1f),
+            verticalArrangement = Arrangement.spacedBy(Theme.spacing.small)
+        ) {
+            items(players.toList(), key = { (idx, _) -> idx }) { (id, textFieldState) ->
 
                 var visible by remember { mutableStateOf(false) }
 

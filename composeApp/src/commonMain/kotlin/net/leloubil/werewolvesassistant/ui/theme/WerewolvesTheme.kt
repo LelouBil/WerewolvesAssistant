@@ -14,28 +14,48 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositeShader
+import androidx.compose.ui.graphics.ImageShader
+import androidx.compose.ui.graphics.LinearGradientShader
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shader
+import androidx.compose.ui.graphics.ShaderBrush
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.*
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.composeunstyled.LocalContentColor
 import com.composeunstyled.LocalTextStyle
 import com.composeunstyled.theme.ColoredIndication
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.imageResource
-import werewolvesassistant.composeapp.generated.resources.*
+import werewolvesassistant.composeapp.generated.resources.Res
+import werewolvesassistant.composeapp.generated.resources.ScalaSans_Bold
+import werewolvesassistant.composeapp.generated.resources.ScalaSans_BoldItalic
+import werewolvesassistant.composeapp.generated.resources.ScalaSans_Regular
+import werewolvesassistant.composeapp.generated.resources.parchment
 
 
 @Suppress("LongParameterList")
 fun coloredIndication(
     base: Color,
-    hoveredColor: Color = base.copy(alpha = 0.08f),
-    focusedColor: Color = base.copy(alpha = 0.1f),
-    pressedColor: Color = base.copy(alpha = 0.1f),
-    draggedColor: Color = base.copy(alpha = 0.16f),
+    hoveredColor: Color = base.copy(alpha = 0.2f),
+    focusedColor: Color = base.copy(alpha = 0.3f),
+    pressedColor: Color = base.copy(alpha = 0.4f),
+    draggedColor: Color = base.copy(alpha = 0.25f),
     animationSpecEnter: AnimationSpec<Float> = snap(),
     animationSpecExit: AnimationSpec<Float> = snap(),
 ): Indication =
@@ -52,7 +72,7 @@ sealed interface ColorOrBrush {
     fun withAlpha(alpha: Float): ColorOrBrush
 
     companion object {
-        val Unspecified = ColorOrBrush.ColorValue(Color.Unspecified)
+        val Unspecified = ColorValue(Color.Unspecified)
     }
 
     data class ColorValue(val color: Color) : ColorOrBrush {
@@ -456,7 +476,7 @@ fun WerewolvesTheme(content: @Composable () -> Unit) {
             background = ColorOrBrush.BrushValue(
                 ShaderBrush(
                     coloredParchmentShader(
-                        Color(0xFFB34747),
+                        Color(0xFF9a3125),
                         intensity = 0.8f,
                         inverted = false
                     )
@@ -473,20 +493,13 @@ fun WerewolvesTheme(content: @Composable () -> Unit) {
             indication = coloredIndication(Color.Gray)
         ),
         secondary = ColorSet(
-            background = Color(0xFF55215A),
-            content = Color(0xFFCD4021),
-            border = ColorOrBrush.ColorValue(Color(0xFF0B1316)),
+            background = Color(0xFF021317),
+            content = Color(0xFFdbb78f),
+            border = ColorOrBrush.ColorValue(Color(0xFF021317)),
             textSelection = TextSelectionColors(
                 handleColor = Color.Green,
                 backgroundColor = Color.Gray
             ),
-            indication = coloredIndication(
-                Color.Red,
-                Color.Red,
-                Color.Red,
-                Color.Red,
-                Color.Red
-            )
         )
     )
 

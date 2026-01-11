@@ -13,18 +13,20 @@ import kotlinx.coroutines.launch
 import org.koin.core.annotation.Singleton
 import org.openani.mediamp.MediampPlayer
 import org.openani.mediamp.PlaybackState
+import org.openani.mediamp.features.AudioLevelController
 import org.openani.mediamp.metadata.duration
 import org.openani.mediamp.playUri
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
-sealed interface TrackInfo {
-
-
-    data class UrlTrack(val uri: String) : TrackInfo
-    data class PlayingTrack(val name: String?, val duration: Duration) : TrackInfo
-
+sealed interface TrackMetadata {
+    data class FullMetadata(val title: String) : TrackMetadata
 }
+
+
+data class UrlTrack(val uri: String)
+data class PlayingTrack(val metadata: TrackMetadata, val duration: Duration)
+
 
 sealed interface MusicStatus {
     data object NoMusic : MusicStatus
@@ -35,7 +37,7 @@ sealed interface MusicStatus {
         data class Paused(override val duration: Duration?) : Progress()
     }
 
-    data class HasMusic(val trackInfo: TrackInfo, val progress: Progress) : MusicStatus
+    data class HasMusic(val trackInfo: PlayingTrack, val progress: Progress) : MusicStatus
 }
 
 interface MusicService {
@@ -46,7 +48,7 @@ interface MusicService {
 
     fun setLooping(isLooping: Boolean)
 
-    fun playReplacing(info: TrackInfo.UrlTrack)
+    fun playReplacing(info: UrlTrack, metadata: TrackMetadata)
 
     fun resume()
     fun pause()
@@ -67,6 +69,8 @@ class DummyContextWrapper : ContextWrapper {
 class MusicServiceImpl(private val context: ContextWrapper) : MusicService {
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val player = MediampPlayer(context.context, scope.coroutineContext)
+
+    private var metadata: MutableStateFlow<TrackMetadata?> = MutableStateFlow(null)
 
     private val _isLooping = MutableStateFlow(true)
     override val isLooping: StateFlow<Boolean> = _isLooping
@@ -91,12 +95,13 @@ class MusicServiceImpl(private val context: ContextWrapper) : MusicService {
     override val status: StateFlow<MusicStatus> = combine(
         player.playbackState,
         player.currentPositionMillis,
-        player.mediaProperties
-    ) { state, millisProgress, mediaProps ->
-        if (mediaProps == null) {
+        player.mediaProperties,
+        metadata
+    ) { state, millisProgress, mediaProps, mediaMeta ->
+        if (mediaProps == null || mediaMeta == null) {
             return@combine MusicStatus.NoMusic
         }
-        val trackInfo = TrackInfo.PlayingTrack(mediaProps.title, mediaProps.duration)
+        val trackInfo = PlayingTrack(mediaMeta, mediaProps.duration)
         val musicProg = millisProgress.milliseconds
         val prog = if (state == PlaybackState.PLAYING) {
             MusicStatus.Progress.Playing(musicProg)
@@ -107,8 +112,12 @@ class MusicServiceImpl(private val context: ContextWrapper) : MusicService {
 
     }.stateIn(scope, SharingStarted.Eagerly, MusicStatus.NoMusic)
 
-    override fun playReplacing(info: TrackInfo.UrlTrack) {
+    override fun playReplacing(info: UrlTrack, metadata: TrackMetadata) {
         scope.launch {
+            player.features[AudioLevelController.Key]?.let {
+                it.setVolume(0.2f * it.maxVolume) // todo
+            }
+            this@MusicServiceImpl.metadata.value = metadata
             player.playUri(info.uri)
         }
     }
