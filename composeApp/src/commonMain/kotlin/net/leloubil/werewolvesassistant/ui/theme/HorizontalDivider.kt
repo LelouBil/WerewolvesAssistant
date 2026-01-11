@@ -1,8 +1,10 @@
 package net.leloubil.werewolvesassistant.ui.theme
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -14,9 +16,9 @@ import com.composeunstyled.LocalContentColor
 @Composable
 fun HorizontalDivider(
     modifier: Modifier = Modifier,
-    thickness: Dp = 1.dp,
+    thickness: Dp = 2.dp,
     color: Color = LocalContentColor.current,
-) = Canvas(modifier.fillMaxWidth().height(thickness)) {
+) = Canvas(modifier.fillMaxWidth().padding(vertical = Theme.spacing.medium).height(thickness).background(Color.Cyan)) {
     drawLine(
         color = color,
         strokeWidth = thickness.toPx(),

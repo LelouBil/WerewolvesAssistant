@@ -9,7 +9,7 @@ naming:
       - KoinViewModel
 style:
   MagicNumber:
-    ignorePropertyDeclaration: true
+    active: false
   UnusedPrivateMember:
     ignoreAnnotated:
       - Preview
@@ -21,4 +21,7 @@ complexity:
   TooManyFunctions:
     ignoreAnnotated:
       - Preview
+  LongParameterList:
+    ignoreAnnotated:
+      - Composable
 

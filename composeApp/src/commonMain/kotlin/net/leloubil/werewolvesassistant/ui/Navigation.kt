@@ -83,7 +83,7 @@ fun NavRoot(modifier: Modifier) {
     val onBack: () -> Unit = { backStack.removeLastOrNull() }
     val navigate: (NavRoutes) -> Unit = { backStack.add(it) }
     Column(modifier) {
-        AppBar(modifier = Modifier.height(30.dp)) {
+        AppBar(modifier = Modifier.height(70.dp)) {
             Button(onClick = onBack, enabled = backStack.size > 1) {
                 Text("Retour")
             }
