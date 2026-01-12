@@ -40,21 +40,25 @@ fun Carte(
     val shape = Theme.shapes.card
     val spec = tween<Float>(500, easing = EaseInOutQuad)
 
-    val rotationTransition = remember { Animatable(0f) }
-    val shownSide = remember { mutableStateOf(wantedSide) }
 
-    val flipped = shownSide.value == CardSide.BackSide
+    var shownSide by remember { mutableStateOf(wantedSide) }
+    val rotationTransition = remember(frontSide) { Animatable(
+        when(shownSide){
+            CardSide.FrontSide -> 0f
+            CardSide.BackSide -> 180f
+        }
+    ) }
 
-    val actualRole = when (shownSide.value) {
+    val flipped = shownSide == CardSide.BackSide
+
+    val actualRole = when (shownSide) {
         CardSide.FrontSide -> frontSide
         CardSide.BackSide -> null
     }
     val scope = rememberCoroutineScope()
 
-
     LaunchedEffect(wantedSide) {
-        println("Wantedside update, wanted: $wantedSide, shown: ${shownSide.value}, isRunning: ${rotationTransition.isRunning}")
-        if(wantedSide == shownSide.value && !rotationTransition.isRunning){
+        if(wantedSide == shownSide){
             return@LaunchedEffect
         }
 
@@ -62,7 +66,7 @@ fun Carte(
             scope.launch {
                 rotationTransition.animateTo(0f, spec) {
                     if (this.value <= 90f) {
-                        shownSide.value = CardSide.FrontSide
+                        shownSide = CardSide.FrontSide
                     }
                 }
             }
@@ -70,9 +74,10 @@ fun Carte(
             scope.launch {
                 rotationTransition.animateTo(180f, spec) {
                     if (this.value > 90f) {
-                        shownSide.value = CardSide.BackSide
+                        shownSide = CardSide.BackSide
                     }
                 }
+
             }
         }
 
