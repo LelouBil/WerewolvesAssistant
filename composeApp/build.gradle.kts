@@ -27,8 +27,8 @@ kotlin {
     }
 
 
-    compilerOptions{
-        freeCompilerArgs.set(listOf("-Xcontext-parameters","-Xconsistent-data-class-copy-visibility"))
+    compilerOptions {
+        freeCompilerArgs.set(listOf("-Xcontext-parameters", "-Xconsistent-data-class-copy-visibility"))
     }
 
     listOf(
@@ -86,8 +86,45 @@ kotlin {
 
 
 ksp {
-    arg("KOIN_CONFIG_CHECK","true")
+    arg("KOIN_CONFIG_CHECK", "true")
 }
+
+val flatResDir: Provider<Directory> = layout.buildDirectory.dir("flatResources")
+val flattenComposeResources by tasks.register<Copy>("flattenComposeResources") {
+    from("src/commonMain/composeResources")
+    into(flatResDir)
+    include("**/*")
+    //flatten subfolders
+    eachFile {
+        val category = this.relativePath.segments.first()
+        val rest = this.relativePath.segments.drop(1).joinToString("_")
+        this.relativePath = RelativePath(this.relativePath.isFile, category, rest)
+    }
+}
+
+compose.resources {
+    customDirectory(
+        "commonMain",
+        flatResDir
+    )
+
+}
+
+tasks.named { it.startsWith("prepareComposeResourcesTask") }.configureEach {
+    dependsOn(flattenComposeResources)
+}
+
+tasks.named { it.startsWith("copyNonXmlValueResources") }.configureEach {
+    dependsOn(flattenComposeResources)
+}
+
+tasks.named {it.startsWith("convertXmlValueResources")}.configureEach {
+    dependsOn(flattenComposeResources)
+}
+
+
+
+
 
 android {
     namespace = "net.leloubil.werewolvesassistant"
@@ -157,7 +194,7 @@ vlcSetup {
     shouldIncludeAllVlcFiles = false
     pathToCopyVlcLinuxFilesTo = desktopAssetsDir.resolve("linux-x64/")
     pathToCopyVlcMacosFilesTo = desktopAssetsDir.resolve("macos-arm64/")
-    pathToCopyVlcWindowsFilesTo =  desktopAssetsDir.resolve("windows-x64/")
+    pathToCopyVlcWindowsFilesTo = desktopAssetsDir.resolve("windows-x64/")
 }
 
 // Trigger Common Metadata Generation from Native tasks

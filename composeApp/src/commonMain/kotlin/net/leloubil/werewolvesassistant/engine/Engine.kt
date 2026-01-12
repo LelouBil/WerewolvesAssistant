@@ -3,6 +3,7 @@ package net.leloubil.werewolvesassistant.engine
 import arrow.core.Either
 import arrow.core.raise.Raise
 import kotlinx.serialization.Serializable
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.PluralStringResource
 import werewolvesassistant.composeapp.generated.resources.Res
 import werewolvesassistant.composeapp.generated.resources.role_cupid
@@ -13,6 +14,14 @@ import werewolvesassistant.composeapp.generated.resources.role_villager
 import werewolvesassistant.composeapp.generated.resources.role_werewolf
 import werewolvesassistant.composeapp.generated.resources.role_white_wolf
 import werewolvesassistant.composeapp.generated.resources.role_witch
+import werewolvesassistant.composeapp.generated.resources.roles_chasseur
+import werewolvesassistant.composeapp.generated.resources.roles_cupidon
+import werewolvesassistant.composeapp.generated.resources.roles_loup
+import werewolvesassistant.composeapp.generated.resources.roles_loup_blanc
+import werewolvesassistant.composeapp.generated.resources.roles_salvateur
+import werewolvesassistant.composeapp.generated.resources.roles_simple_villager
+import werewolvesassistant.composeapp.generated.resources.roles_sorcière
+import werewolvesassistant.composeapp.generated.resources.roles_voyante
 
 
 sealed class GameStepPromptChoosePlayer<T : GameStepData, E> : GameStepPrompt<T, E>() {
@@ -54,6 +63,7 @@ sealed class ConfirmationStepPrompt<I : ConfirmationStepPrompt.Info> :
 @Serializable
 sealed interface Role {
     val name: PluralStringResource
+    val image: DrawableResource
 
     sealed interface Team {
         sealed interface WinsWithVillagers : Team
@@ -64,34 +74,46 @@ sealed interface Role {
 
     data object SimpleVillager : Role, Team.WinsWithVillagers {
         override val name: PluralStringResource = Res.plurals.role_villager
+        override val image: DrawableResource = Res.drawable.roles_simple_villager
     }
 
     data object Cupid : Role, Team.WinsWithVillagers {
         override val name: PluralStringResource = Res.plurals.role_cupid
+        override val image: DrawableResource = Res.drawable.roles_cupidon
     }
 
     data object Seer : Role, Team.WinsWithVillagers {
         override val name: PluralStringResource = Res.plurals.role_seer
+        override val image: DrawableResource = Res.drawable.roles_voyante
     }
 
     data object Witch : Role, Team.WinsWithVillagers {
         override val name: PluralStringResource = Res.plurals.role_witch
+        override val image: DrawableResource = Res.drawable.roles_sorcière
     }
 
     data object Guard : Role, Team.WinsWithVillagers {
         override val name: PluralStringResource = Res.plurals.role_guard
+        override val image: DrawableResource = Res.drawable.roles_salvateur
+
     }
 
     data object Hunter : Role, Team.WinsWithVillagers {
         override val name: PluralStringResource = Res.plurals.role_hunter
+        override val image: DrawableResource = Res.drawable.roles_chasseur
+
     }
 
     data object Werewolf : Role, Team.WinsWithWolves, CalledWithWolves {
         override val name: PluralStringResource = Res.plurals.role_werewolf
+        override val image: DrawableResource = Res.drawable.roles_loup
+
     }
 
     data object WhiteWolf : Role, CalledWithWolves {
         override val name: PluralStringResource = Res.plurals.role_white_wolf
+        override val image: DrawableResource = Res.drawable.roles_loup_blanc
+
     }
 
 }

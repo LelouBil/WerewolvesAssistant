@@ -6,6 +6,7 @@ import androidx.compose.foundation.Indication
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.runtime.Composable
@@ -175,11 +176,13 @@ data class Spacing(
 data class Shapes(
     val button: Shape,
     val surface: Shape,
+    val card: Shape,
 ) {
     companion object {
         val Unspecified = Shapes(
             button = RectangleShape,
             surface = RectangleShape,
+            card = RectangleShape,
         )
     }
 }
@@ -506,6 +509,7 @@ fun WerewolvesTheme(content: @Composable () -> Unit) {
     val defaultShapes = Shapes(
         button = SpikyRectangle(4.dp, 4.dp, 3.dp),
         surface = RectangleShape,
+        card = RoundedCornerShape(15.dp),
     )
 
     CompositionLocalProvider(

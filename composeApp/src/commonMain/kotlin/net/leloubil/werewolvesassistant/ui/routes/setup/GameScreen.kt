@@ -1,31 +1,32 @@
 package net.leloubil.werewolvesassistant.ui.routes.setup
 
+import androidx.compose.animation.animateColor
+import androidx.compose.animation.core.updateTransition
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import arrow.core.Either
 import arrow.core.raise.either
 import com.composeunstyled.Icon
+import com.composeunstyled.LocalContentColor
 import com.composeunstyled.Text
-import net.leloubil.werewolvesassistant.engine.ConfirmationStepPrompt
-import net.leloubil.werewolvesassistant.engine.Game
-import net.leloubil.werewolvesassistant.engine.GameEnd
-import net.leloubil.werewolvesassistant.engine.GameStepData
-import net.leloubil.werewolvesassistant.engine.GameStepPrompt
-import net.leloubil.werewolvesassistant.engine.GameStepPromptChoosePlayer
-import net.leloubil.werewolvesassistant.engine.PlayerName
+import net.leloubil.werewolvesassistant.engine.*
 import net.leloubil.werewolvesassistant.ui.icons.MaterialSymbolsSkull
 import net.leloubil.werewolvesassistant.ui.theme.Button
 import net.leloubil.werewolvesassistant.ui.theme.Checkbox
+import net.leloubil.werewolvesassistant.ui.theme.LocalAccentColorSet
+import net.leloubil.werewolvesassistant.ui.theme.Theme
 
 
 fun <T> Either<Nothing, T>.infaillible(): T = when (this) {
@@ -83,14 +84,53 @@ private fun GameEnded(et: GameEnd) {
 }
 
 @Composable
+private fun ThemeWrapper(game: Game, body: @Composable () -> Unit) {
+    val isNight = game.steps.reversed().firstOrNull {
+        it is GameStepPrompt.NightBegin.Info || it is GameStepPrompt.NightEnd.Info
+    }?.let { it is GameStepPrompt.NightBegin.Info } ?: false
+
+    println(isNight)
+    val nightTransition = updateTransition(isNight)
+
+    val backgroundColor by nightTransition.animateColor {
+        if (it) {
+            Color.Black
+        } else {
+            Color.Transparent
+        }
+    }
+
+    Box(
+        Modifier.fillMaxSize()
+    ) {
+        Box(modifier = Modifier.fillMaxSize().graphicsLayer {
+//            blendMode = BlendMode.Difference
+            alpha = 0.8f
+        }.background(backgroundColor)
+        ) {
+
+        }
+        val provided = if (isNight)
+            arrayOf(
+                LocalAccentColorSet provides Theme.colors.primary,
+                LocalContentColor provides Theme.colors.secondary.content
+            ) else emptyArray()
+
+        CompositionLocalProvider(*provided) {
+            body()
+        }
+    }
+}
+
+@Composable
 fun GameProcess(
     game: Game,
     prompt: GameStepPrompt<*, *>?,
     promptProcessor: ProcessPrompt,
-) {
+) = ThemeWrapper(game) {
     if (prompt == null) {
         Text("null")
-        return
+        return@ThemeWrapper
     }
     when (prompt) {
         is ConfirmationStepPrompt<*> -> Column {
@@ -163,7 +203,7 @@ private enum class WitchAction {
 private fun WitchStep(
     promptProcessor: ProcessPrompt,
     game: Game,
-    prompt: GameStepPrompt.WitchStep
+    prompt: GameStepPrompt.WitchStep,
 ) = Column {
     var action by remember { mutableStateOf<WitchAction?>(null) }
 

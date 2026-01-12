@@ -105,7 +105,9 @@ data class Game private constructor(
             if (lovers != null && (killedPlayers.contains(lovers.player1) || killedPlayers.contains(lovers.player2))) {
                 if (!killedPlayers.containsAll(setOf(lovers.player1, lovers.player2))) {
                     val other = if (killedPlayers.contains(lovers.player1)) lovers.player2 else lovers.player1
-                    addedSteps.add(GameStepPrompt.DeathByLove(other))
+                    if (game.getLivingState(other) is LivingState.Alive) {
+                        addedSteps.add(GameStepPrompt.DeathByLove(other))
+                    }
                 }
             }
         }
