@@ -241,7 +241,7 @@ private fun <P : ConfirmationStepPrompt<D>, D : ConfirmationStepPrompt.Info> Col
                 style = Theme.typography.title
             )
 
-            Carte(Modifier.align(Alignment.CenterHorizontally).fillMaxWidth(.5f), frontSide = info.role)
+            Carte(Modifier.align(Alignment.CenterHorizontally).fillMaxWidth(.5f), front = info.role)
         }
 
         else -> {

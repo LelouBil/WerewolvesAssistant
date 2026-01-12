@@ -3,6 +3,8 @@ package net.leloubil.werewolvesassistant.ui
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draganddrop.DragAndDropEvent
+import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import net.leloubil.werewolvesassistant.ui.theme.Surface
 import net.leloubil.werewolvesassistant.ui.theme.Theme
 import net.leloubil.werewolvesassistant.ui.theme.WerewolvesTheme
@@ -17,4 +19,7 @@ fun App() = WerewolvesTheme {
     }
 }
 
+expect fun plainTextDragDrop(data: String): DragAndDropTransferData
 
+
+expect fun DragAndDropEvent.getStringData(): String?

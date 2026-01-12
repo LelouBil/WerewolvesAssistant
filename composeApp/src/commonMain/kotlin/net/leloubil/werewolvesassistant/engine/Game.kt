@@ -81,10 +81,34 @@ data class Game private constructor(
 
     private fun scheduleNext(): Either<GameEnd, Game> {
         var game = this
-        while (game.nextPrompt?.exists(game) == false) {
+        while (game.nextPrompt?.shouldSkip(game) == true) {
             game = game.copy(
                 nextPrompts = game.nextPrompts.drop(1)
             )
+        }
+
+
+
+        if (game.steps.last().checkGameEnd) {
+            val livingPlayers = game.players.filter { game.getLivingState(it) is LivingState.Alive }
+
+            val lovers = game.steps.filterIsInstance<GameStepPrompt.CupidSetLovers.Data>().firstOrNull()
+            if (lovers != null) {
+                if (livingPlayers.toSet() == setOf(lovers.player1, lovers.player2)) {
+                    return GameEnd.LoversWon(lovers.player1, lovers.player2).left()
+                }
+            }
+            val singleLiving = livingPlayers.singleOrNull()
+            if (singleLiving != null) {
+                if (game.getRoles(singleLiving).contains(Role.WhiteWolf))
+                    return GameEnd.WhiteWolfWon(singleLiving).left()
+            }
+
+            if (livingPlayers.map { game.getRoles(it) }.allOfTeam<Role.Team.WinsWithVillagers>()) {
+                return GameEnd.VillagersWon(livingPlayers.toSet()).left()
+            } else if (livingPlayers.map { game.getRoles(it) }.allOfTeam<Role.Team.WinsWithWolves>()) {
+                return GameEnd.WerewolvesWon(livingPlayers.toSet()).left()
+            }
         }
 
         val last = game.steps.last()
@@ -115,28 +139,6 @@ data class Game private constructor(
             return game.copy(
                 nextPrompts = addedSteps + game.nextPrompts
             ).right()
-        }
-
-        if (game.steps.last().checkGameEnd) {
-            val livingPlayers = game.players.filter { game.getLivingState(it) is LivingState.Alive }
-
-            val lovers = game.steps.filterIsInstance<GameStepPrompt.CupidSetLovers.Data>().firstOrNull()
-            if (lovers != null) {
-                if (livingPlayers.toSet() == setOf(lovers.player1, lovers.player2)) {
-                    return GameEnd.LoversWon(lovers.player1, lovers.player2).left()
-                }
-            }
-            val singleLiving = livingPlayers.singleOrNull()
-            if (singleLiving != null) {
-                if (game.getRoles(singleLiving).contains(Role.WhiteWolf))
-                    return GameEnd.WhiteWolfWon(singleLiving).left()
-            }
-
-            if (livingPlayers.map { game.getRoles(it) }.allOfTeam<Role.Team.WinsWithVillagers>()) {
-                return GameEnd.VillagersWon(livingPlayers.toSet()).left()
-            } else if (livingPlayers.map { game.getRoles(it) }.allOfTeam<Role.Team.WinsWithWolves>()) {
-                return GameEnd.WerewolvesWon(livingPlayers.toSet()).left()
-            }
         }
 
         if (game.nextPrompts.isEmpty()) {

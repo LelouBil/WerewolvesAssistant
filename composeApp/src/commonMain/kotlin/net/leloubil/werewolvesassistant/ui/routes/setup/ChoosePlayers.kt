@@ -74,6 +74,7 @@ fun ChoosePlayersMenu(setRoles: (List<PlayerName>) -> Unit, viewModel: ChoosePla
         Text("Create Game", style = Theme.typography.title)
 
         HorizontalDivider()
+        //todo padding pour clavier android
 
         LazyColumn(
             Modifier.scrollable(
@@ -116,7 +117,7 @@ fun ChoosePlayersMenu(setRoles: (List<PlayerName>) -> Unit, viewModel: ChoosePla
 
         Button(onClick = {
             setRoles(players.map { PlayerName(it.second.text.toString()) })
-        }, enabled = players.size > 3, colorSet = Theme.colors.secondary) {
+        }, enabled = players.size > 3 && players.size == players.map { it.second.text.toString() }.distinct().size, colorSet = Theme.colors.secondary) {
             Text("Create Game")
         }
 

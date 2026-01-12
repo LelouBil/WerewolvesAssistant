@@ -17,9 +17,20 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.center
+import androidx.compose.ui.unit.lerp
+import androidx.compose.ui.unit.round
+import androidx.compose.ui.unit.toOffset
+import androidx.compose.ui.unit.toSize
+import androidx.compose.ui.util.lerp
 import androidx.lifecycle.ViewModel
 import com.composeunstyled.Text
+import kotlinx.coroutines.delay
 import net.leloubil.werewolvesassistant.engine.Role
 import net.leloubil.werewolvesassistant.engine.RolesList
 import net.leloubil.werewolvesassistant.ui.CardSide
@@ -31,6 +42,9 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.android.annotation.KoinViewModel
 import org.koin.core.annotation.InjectedParam
 import werewolvesassistant.composeapp.generated.resources.*
+import kotlin.math.abs
+import kotlin.math.roundToInt
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
@@ -70,18 +84,43 @@ fun PreGameShowRoles(viewModel: PreGameShowRolesViewModel, nextShowIndex: () -> 
                 var shownSide by remember { mutableStateOf(CardSide.BackSide) }
                 val progress = remember { Animatable(0f) }
                 var isHeldDown by remember { mutableStateOf(false) }
+                var lastPos: PointerInputChange? by remember { mutableStateOf(null) }
+                var lastCardSize: IntSize? by remember { mutableStateOf(null) }
                 LaunchedEffect(isHeldDown) {
                     if (isHeldDown) {
-                        if(shownSide == CardSide.FrontSide){
+                        if (shownSide == CardSide.FrontSide) {
                             shownSide = CardSide.BackSide
                             return@LaunchedEffect
                         }
+
+//                        val duration = if(lastCardSize != null && lastPos != null) {
+//                            val a = lastPos!!.position.round()
+//                            println("lasttouchpos: $a")
+//                            val b = lastCardSize!!.center
+//                            println("lastcardcenter: $b")
+//                            val distance = a - b
+//                            println("distance a - b: $distance")
+//                            val absed = IntOffset(abs(distance.x),abs(distance.y)).toOffset().getDistance()
+//                            println("abs: $absed")
+//                            val maxMagn = IntOffset(lastCardSize!!.width,lastCardSize!!.height).toOffset().getDistance() / 2f
+//                            println("maxmagn: $maxMagn")
+//                            val perc = absed / maxMagn
+//                            println("perc: $perc")
+//                            val time: Float = lerp(1f,2f,perc)
+//                            println("time: $time seconds")
+//
+//                            time.toDouble().seconds
+//                        } else {
+                          val duration =  2.seconds
+//                        }
                         progress.animateTo(
                             1f,
-                            tween(durationMillis = 2.seconds.toInt(DurationUnit.MILLISECONDS), easing = LinearEasing)
+                            tween(durationMillis = duration.toInt(DurationUnit.MILLISECONDS), easing = LinearEasing)
                         )
                         shownSide = CardSide.FrontSide
+                        delay(400.milliseconds)
                         progress.snapTo(0f)
+                        lastPos = null
                     } else {
                         shownSide = CardSide.BackSide
                         progress.animateTo(
@@ -91,37 +130,83 @@ fun PreGameShowRoles(viewModel: PreGameShowRolesViewModel, nextShowIndex: () -> 
                                 easing = LinearEasing
                             )
                         )
+                        lastPos = null
                     }
 
                 }
-                Box(Modifier.weight(0.7f).padding(Theme.spacing.medium)) {
-                    Carte(
-                        Modifier.fillMaxSize()
-                            .pointerInput(role, shownSide) {
-                                awaitEachGesture {
-                                    awaitFirstDown()
-                                    isHeldDown = true
-                                    waitForUpOrCancellation()
-                                    isHeldDown = false
+
+                Carte(
+                    Modifier.weight(0.7f)
+                        .padding(Theme.spacing.medium)
+                        .onGloballyPositioned{
+                            lastCardSize = it.size
+                        }
+                        .pointerInput(role, shownSide) {
+                            awaitEachGesture {
+                                val thisPos = awaitFirstDown()
+                                if (lastPos != null) {
+                                    return@awaitEachGesture
                                 }
-                            }, role, shownSide
-                    ) {
+                                lastPos = thisPos
+                                isHeldDown = true
+                                waitForUpOrCancellation()
+                                isHeldDown = false
+                            }
+                        }, role, shownSide, overBack = {
 
                         Box(
                             modifier = Modifier
+                                .then(
+                                    if (lastPos != null) {
+                                        Modifier
+                                            .align { size, size1, direction ->
+                                                if(lastPos != null) {
+                                                    IntOffset(
+                                                        lastPos!!.position.x.roundToInt() - size.width / 2,
+                                                        lastPos!!.position.y.roundToInt() - size.height / 2
+                                                    )
+                                                } else IntOffset.Zero
+                                            }
+                                    } else {
+                                        Modifier.align(Alignment.Center)
+                                    }
+                                )
+
                                 .fillMaxSize(1f)
-                                .align(Alignment.Center)
+//                                .align(Alignment.Center)
                                 .graphicsLayer {
                                     blendMode = BlendMode.Exclusion
-                                    scaleX = progress.value * 1.5f
-                                    scaleY = progress.value * 1.5f
+
+
+                                    val mult = if(lastCardSize != null && lastPos != null) {
+                                        val a = lastPos!!.position.round()
+//                                        println("lasttouchpos: $a")
+                                        val b = lastCardSize!!.center
+//                                        println("lastcardcenter: $b")
+                                        val distance = a - b
+//                                        println("distance a - b: $distance")
+                                        val absed = IntOffset(abs(distance.x),abs(distance.y)).toOffset().getDistance()
+//                                        println("abs: $absed")
+                                        val maxMagn = IntOffset(lastCardSize!!.width,lastCardSize!!.height).toOffset().getDistance() / 2f
+//                                        println("maxmagn: $maxMagn")
+                                        val perc = absed / maxMagn
+//                                        println("perc: $perc")
+                                        lerp(1.5f,3f,perc)
+
+                                    } else {
+                                        1.5f
+                                    }
+
+                                    scaleX = progress.value * mult
+                                    scaleY = progress.value * mult
                                 }
                                 .clip(CircleShape)
                                 .background(Color.White)
+
                         ) {
                         }
                     }
-                }
+                )
 
                 Box(Modifier.weight(0.3f)) {
                     function(shownSide, role, nextShowIndex)
@@ -140,14 +225,18 @@ private fun BoxScope.function(
         shownSide == CardSide.FrontSide,
         modifier = Modifier.fillMaxSize()
     ) {
-        Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.SpaceBetween) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
             Text(
                 pluralStringResource(role.name, 1),
                 style = Theme.typography.buttonTitle
             )
             //todo description du role
             Button(
-                modifier =  Modifier.align(Alignment.End),
+                modifier = Modifier.align(Alignment.End),
                 onClick = {
                     nextShowIndex()
                 }) {

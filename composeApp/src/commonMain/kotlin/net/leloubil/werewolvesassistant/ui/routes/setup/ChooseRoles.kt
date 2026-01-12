@@ -1,44 +1,54 @@
 package net.leloubil.werewolvesassistant.ui.routes.setup
 
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.animateBounds
 import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import com.composeunstyled.Icon
 import com.composeunstyled.Text
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import net.leloubil.werewolvesassistant.engine.PlayerName
 import net.leloubil.werewolvesassistant.engine.Role
-import net.leloubil.werewolvesassistant.engine.RolesList
+import net.leloubil.werewolvesassistant.ui.CardSide
+import net.leloubil.werewolvesassistant.ui.Carte
 import net.leloubil.werewolvesassistant.ui.theme.Button
 import net.leloubil.werewolvesassistant.ui.theme.HorizontalDivider
+import net.leloubil.werewolvesassistant.ui.theme.Theme
+import net.leloubil.werewolvesassistant.ui.theme.background
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.android.annotation.KoinViewModel
 import org.koin.core.annotation.InjectedParam
 import werewolvesassistant.composeapp.generated.resources.Res
 import werewolvesassistant.composeapp.generated.resources.select_roles_continue
-import werewolvesassistant.composeapp.generated.resources.select_roles_randomize
 import werewolvesassistant.composeapp.generated.resources.select_roles_subtitle
 import werewolvesassistant.composeapp.generated.resources.select_roles_title
+import kotlin.time.Duration.Companion.milliseconds
 
 
 @KoinViewModel
@@ -56,13 +66,6 @@ class ChooseRolesMenuViewModel(@InjectedParam val players: List<PlayerName>) : V
     private val _assignments = MutableStateFlow<List<Pair<PlayerName, Role>>?>(null)
     val assignments = _assignments.asStateFlow()
 
-    fun assignPlayersRandomly() {
-        val totalRoles = counts.value.values.sum()
-        if (totalRoles != players.size.toUInt()) return
-
-        val allRoles = counts.value.flatMap { (role, count) -> List(count.toInt()) { role } }.shuffled()
-        _assignments.value = players.mapIndexed { idx, playerName -> playerName to allRoles[idx] }
-    }
 
     fun setRoleCount(role: Role, count: UInt) {
         _assignments.value = null
@@ -73,9 +76,13 @@ class ChooseRolesMenuViewModel(@InjectedParam val players: List<PlayerName>) : V
 }
 
 @Composable
-fun ChooseRolesMenu(viewModel: ChooseRolesMenuViewModel, preGame: (RolesList) -> Unit) =
+fun ChooseRolesMenu(viewModel: ChooseRolesMenuViewModel,
+                                          animatedVisibilityScope: AnimatedVisibilityScope,
+                                          sharedTransitionScope: SharedTransitionScope,
+                                          assignRoles: (List<PlayerName>, List<Role>) -> Unit) =
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         val counts by viewModel.counts.collectAsState()
+        val rolesList = counts.flatMap { (role, count) -> List(count.toInt()) { role } }
 
 //        Text(stringResource(Res.string.select_roles_title), style = MaterialTheme.typography.titleLarge)
 //        Text(stringResource(Res.string.select_roles_subtitle), style = MaterialTheme.typography.titleSmall)
@@ -83,6 +90,8 @@ fun ChooseRolesMenu(viewModel: ChooseRolesMenuViewModel, preGame: (RolesList) ->
         Text(stringResource(Res.string.select_roles_subtitle))
 
         Text("${counts.values.sum()} / ${viewModel.players.size}")
+
+
 
         Row(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -115,22 +124,56 @@ fun ChooseRolesMenu(viewModel: ChooseRolesMenuViewModel, preGame: (RolesList) ->
             }
         }
 
-        Button(
-            enabled = counts.values.sum() == viewModel.players.size.toUInt(),
-            onClick = {
-                viewModel.assignPlayersRandomly()
+        val visualRolesList = counts.flatMap { (role, count) -> List(count.toInt()) { i -> role to (
+            role::class.qualifiedName + i.toString()
+        ) } }
+        val paddedElems: List<Pair<Role?, String>> =
+            visualRolesList + List((viewModel.players.size - rolesList.size).coerceAtLeast(0)) { i -> null to i.toString() }
+
+        LazyVerticalGrid(GridCells.FixedSize(75.dp),modifier = Modifier
+            .widthIn(max = 75.dp * (paddedElems.size + 1) + Theme.spacing.small * (paddedElems.size - 1))
+            .padding(horizontal = Theme.spacing.medium),
+            horizontalArrangement = Arrangement.spacedBy(Theme.spacing.small, Alignment.CenterHorizontally),
+            verticalArrangement = Arrangement.spacedBy(Theme.spacing.small),
+            contentPadding = PaddingValues(Theme.spacing.small)) {
+                items(
+                paddedElems,
+                key = { (role, i) -> i}) { (it, i) ->
+//                LookaheadScope {
+//                    var shownSide by remember { mutableStateOf(CardSide.BackSide) }
+//                    var visibleRole by remember { mutableStateOf<Role?>(null) }
+//                    LaunchedEffect(it) {
+//                        if (it == null) {
+//                            shownSide = CardSide.BackSide
+//                            delay(500.milliseconds)
+//                            visibleRole = null
+//                        } else {
+//                            if (shownSide == CardSide.FrontSide) {
+//                                shownSide = CardSide.BackSide
+//                                delay(500.milliseconds)
+//                            }
+//                            visibleRole = it
+//                            shownSide = CardSide.FrontSide
+//                        }
+//                    }
+                    val shownSide = if(it == null) CardSide.BackSide else CardSide.FrontSide
+                    val visibleRole = it
+                    Carte(Modifier.animateItem().fillMaxHeight().let {
+                        with(sharedTransitionScope) {
+                            it.sharedElement(
+                                this.rememberSharedContentState(i),
+                                animatedVisibilityScope = animatedVisibilityScope
+                            )
+                        }
+                    }, visibleRole, shownSide)
+//                }
             }
-        ) {
-            Text(stringResource(Res.string.select_roles_randomize))
         }
 
-        val assignments by viewModel.assignments.collectAsState()
-        if (assignments != null)
-            Text(assignments.toString())
 
         Button(onClick = {
-            assignments?.let { preGame(it) }
-        }, enabled = assignments != null) {
+            assignRoles(viewModel.players, rolesList)
+        }, enabled = counts.values.sum() == viewModel.players.size.toUInt()) {
             Text(stringResource(Res.string.select_roles_continue))
         }
     }

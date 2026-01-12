@@ -4,7 +4,6 @@ import arrow.core.Either
 import arrow.core.getOrElse
 import arrow.core.raise.either
 import io.kotest.core.spec.style.FunSpec
-import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 
@@ -33,10 +32,10 @@ class GameEngineTest : FunSpec({
 
         // Checks that no special roles prompt is called
         // Since we only have Werewolf and SimpleVillagers, those shouldn't exist
-        GameStepPrompt.CupidSetLovers.exists(game) shouldBe false
-        GameStepPrompt.GuardProtect.exists(game) shouldBe false
-        GameStepPrompt.SeerSee.exists(game) shouldBe false
-        GameStepPrompt.WitchShow.exists(game) shouldBe false
+        GameStepPrompt.CupidSetLovers.shouldSkip(game) shouldBe false
+        GameStepPrompt.GuardProtect.shouldSkip(game) shouldBe false
+        GameStepPrompt.SeerSee.shouldSkip(game) shouldBe false
+        GameStepPrompt.WitchShow.shouldSkip(game) shouldBe false
 
         // Next should be WerewolvesKill
         game.nextPrompt shouldBe GameStepPrompt.WerewolvesKill

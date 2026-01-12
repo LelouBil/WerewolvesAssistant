@@ -5,23 +5,7 @@ import arrow.core.raise.Raise
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.PluralStringResource
-import werewolvesassistant.composeapp.generated.resources.Res
-import werewolvesassistant.composeapp.generated.resources.role_cupid
-import werewolvesassistant.composeapp.generated.resources.role_guard
-import werewolvesassistant.composeapp.generated.resources.role_hunter
-import werewolvesassistant.composeapp.generated.resources.role_seer
-import werewolvesassistant.composeapp.generated.resources.role_villager
-import werewolvesassistant.composeapp.generated.resources.role_werewolf
-import werewolvesassistant.composeapp.generated.resources.role_white_wolf
-import werewolvesassistant.composeapp.generated.resources.role_witch
-import werewolvesassistant.composeapp.generated.resources.roles_chasseur
-import werewolvesassistant.composeapp.generated.resources.roles_cupidon
-import werewolvesassistant.composeapp.generated.resources.roles_loup
-import werewolvesassistant.composeapp.generated.resources.roles_loup_blanc
-import werewolvesassistant.composeapp.generated.resources.roles_salvateur
-import werewolvesassistant.composeapp.generated.resources.roles_simple_villager
-import werewolvesassistant.composeapp.generated.resources.roles_sorcière
-import werewolvesassistant.composeapp.generated.resources.roles_voyante
+import werewolvesassistant.composeapp.generated.resources.*
 
 
 sealed class GameStepPromptChoosePlayer<T : GameStepData, E> : GameStepPrompt<T, E>() {
@@ -70,44 +54,52 @@ sealed interface Role {
 
     sealed interface CalledWithWolves : Role
 
+    @Serializable
     data object SimpleVillager : Role, Team.WinsWithVillagers {
         override val name: PluralStringResource = Res.plurals.role_villager
         override val image: DrawableResource = Res.drawable.roles_simple_villager
     }
 
+    @Serializable
     data object Cupid : Role, Team.WinsWithVillagers {
         override val name: PluralStringResource = Res.plurals.role_cupid
         override val image: DrawableResource = Res.drawable.roles_cupidon
     }
 
+    @Serializable
     data object Seer : Role, Team.WinsWithVillagers {
         override val name: PluralStringResource = Res.plurals.role_seer
         override val image: DrawableResource = Res.drawable.roles_voyante
     }
 
+    @Serializable
     data object Witch : Role, Team.WinsWithVillagers {
         override val name: PluralStringResource = Res.plurals.role_witch
         override val image: DrawableResource = Res.drawable.roles_sorcière
     }
 
+    @Serializable
     data object Guard : Role, Team.WinsWithVillagers {
         override val name: PluralStringResource = Res.plurals.role_guard
         override val image: DrawableResource = Res.drawable.roles_salvateur
 
     }
 
+    @Serializable
     data object Hunter : Role, Team.WinsWithVillagers {
         override val name: PluralStringResource = Res.plurals.role_hunter
         override val image: DrawableResource = Res.drawable.roles_chasseur
 
     }
 
+    @Serializable
     data object Werewolf : Role, Team.WinsWithWolves, CalledWithWolves {
         override val name: PluralStringResource = Res.plurals.role_werewolf
         override val image: DrawableResource = Res.drawable.roles_loup
 
     }
 
+    @Serializable
     data object WhiteWolf : Role, CalledWithWolves {
         override val name: PluralStringResource = Res.plurals.role_white_wolf
         override val image: DrawableResource = Res.drawable.roles_loup_blanc
@@ -142,7 +134,7 @@ sealed interface GameStepData {
 
 @Serializable
 sealed class GameStepPrompt<T : GameStepData, E> {
-    abstract fun exists(game: Game): Boolean
+    abstract fun shouldSkip(game: Game): Boolean
 
     abstract fun checkStepData(game: Game, data: T): E?
 
@@ -155,7 +147,7 @@ sealed class GameStepPrompt<T : GameStepData, E> {
     data object NightBegin : ConfirmationStepPrompt<NightBegin.Info>() {
         data object Info : ConfirmationStepPrompt.Info
 
-        override fun exists(game: Game): Boolean = true
+        override fun shouldSkip(game: Game): Boolean = false
         override fun getInfo(game: Game): Info = Info
     }
 
@@ -166,7 +158,7 @@ sealed class GameStepPrompt<T : GameStepData, E> {
             override val killed: Set<PlayerName> = deathsSummary.map { it.first }.toSet()
         }
 
-        override fun exists(game: Game): Boolean = true
+        override fun shouldSkip(game: Game): Boolean = false
         override fun getInfo(game: Game): Info {
             val summary = game.thisNight().fold(emptyList<PlayerName>()) { acc, step ->
                 when (step) {
@@ -186,7 +178,7 @@ sealed class GameStepPrompt<T : GameStepData, E> {
             override val killed: Set<PlayerName> = setOf(dead)
         }
 
-        override fun exists(game: Game): Boolean = true
+        override fun shouldSkip(game: Game): Boolean = false
         override fun getInfo(game: Game): Info = Info(dead)
     }
 
@@ -203,8 +195,8 @@ sealed class GameStepPrompt<T : GameStepData, E> {
 
         }
 
-        override fun exists(game: Game): Boolean =
-            game.hasAliveRole(Role.Cupid) && game.steps.filterIsInstance<Data>().none()
+        override fun shouldSkip(game: Game): Boolean =
+            !game.hasAliveRole(Role.Cupid) || game.steps.filterIsInstance<Data>().any()
 
         override fun checkStepData(game: Game, data: Data): Error? {
             if (data.player1 == data.player2) {
@@ -231,7 +223,7 @@ sealed class GameStepPrompt<T : GameStepData, E> {
         }
 
         override fun createPrompt(player: PlayerName): Data = Data(player)
-        override fun exists(game: Game): Boolean = game.hasAliveRole(Role.Guard)
+        override fun shouldSkip(game: Game): Boolean = !game.hasAliveRole(Role.Guard)
 
         override fun checkStepData(game: Game, data: Data): Error? {
             if (game.getLivingState(data.player) is Game.LivingState.Dead) {
@@ -250,8 +242,8 @@ sealed class GameStepPrompt<T : GameStepData, E> {
             override val alive: Set<PlayerName> = resurrected?.let { setOf(it) }.orEmpty()
         }
 
-        override fun exists(game: Game): Boolean =
-            game.hasAliveRole(Role.Guard) && game.thisNight().filterIsInstance<GuardProtect.Data>().any()
+        override fun shouldSkip(game: Game): Boolean =
+            game.thisNight().filterIsInstance<GuardProtect.Data>().none() || getInfo(game).resurrected == null
 
         override fun getInfo(game: Game): Info {
             val guardProtects = game.thisNight().filterIsInstance<GuardProtect.Data>()
@@ -267,7 +259,7 @@ sealed class GameStepPrompt<T : GameStepData, E> {
     data object WitchShow : ConfirmationStepPrompt<WitchShow.Info>() {
         data class Info(val killedByWolves: PlayerName?) : ConfirmationStepPrompt.Info
 
-        override fun exists(game: Game): Boolean = game.hasAliveRole(Role.Witch)
+        override fun shouldSkip(game: Game): Boolean = !game.hasAliveRole(Role.Witch)
         override fun getInfo(game: Game): Info {
             val killedByWolves: PlayerName? = game.thisNight().fold(null) { acc, step ->
                 when (step) {
@@ -301,7 +293,7 @@ sealed class GameStepPrompt<T : GameStepData, E> {
             data object KillAlreadyUsed : Error
         }
 
-        override fun exists(game: Game): Boolean = game.hasAliveRole(Role.Witch)
+        override fun shouldSkip(game: Game): Boolean = !game.hasAliveRole(Role.Witch)
 
         override fun checkStepData(game: Game, data: Data): Error? {
             return when (data) {
@@ -341,7 +333,7 @@ sealed class GameStepPrompt<T : GameStepData, E> {
     }
 
     data object MayorElection : GameStepPromptChoosePlayer<MayorElection.Data, MayorElection.Errors>() {
-        override fun exists(game: Game): Boolean = alreadyHasMayor(game) == null
+        override fun shouldSkip(game: Game): Boolean = alreadyHasMayor(game) != null
         data class Data(val mayor: PlayerName) : GameStepData
 
         override fun createPrompt(player: PlayerName): Data = Data(player)
@@ -368,7 +360,7 @@ sealed class GameStepPrompt<T : GameStepData, E> {
             override val killed = setOf(victim)
         }
 
-        override fun exists(game: Game): Boolean = true
+        override fun shouldSkip(game: Game): Boolean = false
 
         override fun createPrompt(player: PlayerName): Data = Data(player)
 
@@ -390,7 +382,7 @@ sealed class GameStepPrompt<T : GameStepData, E> {
             override val killed = setOf(victim)
         }
 
-        override fun exists(game: Game): Boolean = game.hasAliveRole(Role.Hunter)
+        override fun shouldSkip(game: Game): Boolean = !game.hasAliveRole(Role.Hunter)
 
         override fun createPrompt(player: PlayerName): Data = Data(player)
 
@@ -412,7 +404,7 @@ sealed class GameStepPrompt<T : GameStepData, E> {
             override val hiddenKilled = setOf(victim)
         }
 
-        override fun exists(game: Game): Boolean = game.hasAliveRole<Role.CalledWithWolves>()
+        override fun shouldSkip(game: Game): Boolean = !game.hasAliveRole<Role.CalledWithWolves>()
 
         override fun createPrompt(player: PlayerName): Data =
             Data(player)
@@ -434,10 +426,10 @@ sealed class GameStepPrompt<T : GameStepData, E> {
             override val hiddenKilled = setOf(victim)
         }
 
-        override fun exists(game: Game): Boolean {
-            if (!game.hasAliveRole(Role.WhiteWolf)) return false
+        override fun shouldSkip(game: Game): Boolean {
+            if (!game.hasAliveRole(Role.WhiteWolf)) return true
             val nightCount = game.steps.count { it is NightBegin.Info }
-            return nightCount % 2 == 0
+            return nightCount % 2 != 0
         }
 
         override fun createPrompt(player: PlayerName): Data = Data(player)
@@ -457,7 +449,7 @@ sealed class GameStepPrompt<T : GameStepData, E> {
     data object SeerSee : GameStepPromptChoosePlayer<SeerSee.Data, Nothing>() {
         data class Data(val player: PlayerName) : GameStepData
 
-        override fun exists(game: Game): Boolean = game.hasAliveRole(Role.Seer)
+        override fun shouldSkip(game: Game): Boolean = !game.hasAliveRole(Role.Seer)
         override fun createPrompt(player: PlayerName): Data = Data(player)
         override fun checkStepData(game: Game, data: Data): Nothing? = null
     }
@@ -465,7 +457,7 @@ sealed class GameStepPrompt<T : GameStepData, E> {
     data object SeerShow : ConfirmationStepPrompt<SeerShow.Info>() {
         data class Info(val player: PlayerName, val role: Role) : ConfirmationStepPrompt.Info
 
-        override fun exists(game: Game): Boolean = game.hasAliveRole(Role.Seer)
+        override fun shouldSkip(game: Game): Boolean = !game.hasAliveRole(Role.Seer)
         override fun getInfo(game: Game): Info {
             val player = game.getLast<SeerSee.Data>()!!.player
             return Info(player, game.getRoles(player).first())

@@ -479,7 +479,7 @@ fun WerewolvesTheme(content: @Composable () -> Unit) {
             background = ColorOrBrush.BrushValue(
                 ShaderBrush(
                     coloredParchmentShader(
-                        Color(0xFF9a3125),
+                        Color(0xFF9b504a),
                         intensity = 0.8f,
                         inverted = false
                     )
@@ -509,7 +509,7 @@ fun WerewolvesTheme(content: @Composable () -> Unit) {
     val defaultShapes = Shapes(
         button = SpikyRectangle(4.dp, 4.dp, 3.dp),
         surface = RectangleShape,
-        card = RoundedCornerShape(15.dp),
+        card = RoundedCornerShape(0.25f),
     )
 
     CompositionLocalProvider(

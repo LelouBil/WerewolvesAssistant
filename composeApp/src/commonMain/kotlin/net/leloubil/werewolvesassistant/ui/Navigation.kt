@@ -4,31 +4,24 @@
 
 package net.leloubil.werewolvesassistant.ui
 
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import androidx.navigation3.ui.NavDisplay
 import androidx.savedstate.serialization.SavedStateConfiguration
 import arrow.core.Either
@@ -41,24 +34,16 @@ import com.composeunstyled.Text
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 import kotlinx.serialization.modules.SerializersModule
-import net.leloubil.werewolvesassistant.engine.Game
-import net.leloubil.werewolvesassistant.engine.GameEnd
-import net.leloubil.werewolvesassistant.engine.PlayerName
-import net.leloubil.werewolvesassistant.engine.RolesList
+import kotlinx.serialization.modules.polymorphic
+import kotlinx.serialization.modules.subclass
+import net.leloubil.werewolvesassistant.engine.*
 import net.leloubil.werewolvesassistant.modules.MusicService
 import net.leloubil.werewolvesassistant.modules.MusicStatus
 import net.leloubil.werewolvesassistant.modules.TrackMetadata
 import net.leloubil.werewolvesassistant.modules.UrlTrack
 import net.leloubil.werewolvesassistant.ui.routes.MainMenu
-import net.leloubil.werewolvesassistant.ui.routes.setup.ChoosePlayersMenu
-import net.leloubil.werewolvesassistant.ui.routes.setup.ChooseRolesMenu
-import net.leloubil.werewolvesassistant.ui.routes.setup.GameScreen
-import net.leloubil.werewolvesassistant.ui.routes.setup.PreGameShowRoles
-import net.leloubil.werewolvesassistant.ui.theme.Button
-import net.leloubil.werewolvesassistant.ui.theme.ColorSet
-import net.leloubil.werewolvesassistant.ui.theme.LocalAccentColorSet
-import net.leloubil.werewolvesassistant.ui.theme.ProvideContentColorSet
-import net.leloubil.werewolvesassistant.ui.theme.background
+import net.leloubil.werewolvesassistant.ui.routes.setup.*
+import net.leloubil.werewolvesassistant.ui.theme.*
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -66,7 +51,7 @@ import kotlin.time.Duration
 
 
 @Serializable
-sealed interface NavRoutes : NavKey {
+sealed interface NavRoutes {
     @Serializable
     data object MainScreen : NavRoutes
 
@@ -78,6 +63,9 @@ sealed interface NavRoutes : NavKey {
 
     @Serializable
     data class ChooseRolesScreen(val players: List<PlayerName>) : CreateGameScreens
+
+    @Serializable
+    data class AssignRolesScreen(val players: List<PlayerName>, val roles: List<Role>) : CreateGameScreens
 
     @Serializable
     data class PreGameShowRolesScreen(val players: RolesList, val showingIndex: UInt?) :
@@ -94,104 +82,143 @@ sealed interface NavRoutes : NavKey {
 
 }
 
+@Serializable
+data class NavWrapper(val route: NavRoutes) : NavKey
+
+val NavRoutes.navKey: NavWrapper
+    get() = NavWrapper(this)
+
 private val config = SavedStateConfiguration {
-    serializersModule = SerializersModule {}
+    serializersModule = SerializersModule {
+
+        polymorphic(baseClass = NavKey::class) {
+            subclass(serializer = NavWrapper.serializer())
+        }
+    }
 }
 
 @Composable
 fun NavRoot(modifier: Modifier) {
-    val backStack = remember { mutableStateListOf<NavRoutes>(NavRoutes.MainScreen) }
+    val backStack = rememberNavBackStack(config, NavRoutes.MainScreen.navKey)
     val onBack: () -> Unit = { backStack.removeLastOrNull() }
-    val navigate: (NavRoutes) -> Unit = { backStack.add(it) }
+    val navigate: (NavRoutes) -> Unit = { backStack.add(it.navKey) }
     Column(modifier) {
-        AppBar(modifier = Modifier.height(70.dp)) {
+        val topInsets = WindowInsets.systemBars.only(WindowInsetsSides.Top)
+        AppBar(modifier = Modifier.height(90.dp).windowInsetsPadding(topInsets)) {
             AppBarContents(onBack, backStack.size > 1)
         }
-        NavDisplay(
-            modifier = Modifier.fillMaxSize(),
-            backStack = backStack,
-            onBack = onBack,
-            entryProvider = { key ->
-                when (key) {
-                    NavRoutes.MainScreen -> NavEntry(key) { MainMenu { navigate(NavRoutes.ChoosePlayersScreen) } }
-                    NavRoutes.ChoosePlayersScreen -> NavEntry(key) {
-                        ChoosePlayersMenu({
-                            navigate(
-                                NavRoutes.ChooseRolesScreen(
-                                    it
-                                )
-                            )
-                        })
-                    }
-
-                    is NavRoutes.ChooseRolesScreen -> NavEntry(key) {
-                        ChooseRolesMenu(
-                            koinViewModel(key = key.toString()) { parametersOf(key.players) },
-                            preGame = {
+        SharedTransitionLayout {
+            NavDisplay(
+                modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.systemBars.exclude(topInsets)),
+                backStack = backStack,
+                onBack = onBack,
+                entryProvider = { key ->
+                    val route = (key as NavWrapper).route
+                    when (route) {
+                        NavRoutes.MainScreen -> NavEntry(key) { MainMenu { navigate(NavRoutes.ChoosePlayersScreen) } }
+                        NavRoutes.ChoosePlayersScreen -> NavEntry(key) {
+                            ChoosePlayersMenu({
                                 navigate(
-                                    NavRoutes.PreGameShowRolesScreen(
-                                        it,
-                                        null
+                                    NavRoutes.ChooseRolesScreen(
+                                        it
                                     )
                                 )
                             })
-                    }
-
-                    is NavRoutes.PreGameShowRolesScreen -> NavEntry(key) {
-                        println(key)
-                        PreGameShowRoles(
-                            koinViewModel(key = key.toString()) { parametersOf(key.players, key.showingIndex) },
-                            nextShowIndex = {
-                                if (key.showingIndex == null) {
-                                    println("ShowingIndex null")
-                                    navigate(
-                                        NavRoutes.PreGameShowRolesScreen(
-                                            key.players,
-                                            0u
-                                        )
-                                    )
-                                    return@PreGameShowRoles
-                                } else if (key.showingIndex + 1u >= key.players.size.toUInt()) {
-                                    //all shown, go to game screen
-                                    navigate(
-                                        NavRoutes.GameScreen.GameScreenStart(
-                                            key.players
-                                        )
-                                    )
-                                    return@PreGameShowRoles
-                                } else {
-                                    navigate(
-                                        NavRoutes.PreGameShowRolesScreen(
-                                            key.players,
-                                            key.showingIndex + 1u
-                                        )
-                                    )
-                                }
-                            },
-
-                            )
-                    }
-
-                    is NavRoutes.GameScreen -> NavEntry(key) {
-                        val nextGame: (Either<GameEnd, Game>) -> Unit = {
-                            println("navigating: $it")
-                            navigate(NavRoutes.GameScreen.GameScreenTurn(it))
                         }
-                        when (key) {
-                            is NavRoutes.GameScreen.GameScreenStart -> GameScreen(Game(key.players)!!.right(), nextGame)
-                            is NavRoutes.GameScreen.GameScreenTurn -> GameScreen(key.game, nextGame)
+
+                        is NavRoutes.ChooseRolesScreen -> NavEntry(key) {
+                            ChooseRolesMenu(
+                                koinViewModel(key = route.toString()) { parametersOf(route.players) },
+                                LocalNavAnimatedContentScope.current,
+                                this@SharedTransitionLayout,
+                                assignRoles = { players, roles ->
+                                    navigate(
+                                        NavRoutes.AssignRolesScreen(
+                                            players,
+                                            roles
+                                        )
+                                    )
+                                })
+                        }
+
+                        is NavRoutes.AssignRolesScreen -> NavEntry(key) {
+                            AssignRolesMenu(
+                                koinViewModel(key = route.toString()) { parametersOf(route.players, route.roles) },
+                                LocalNavAnimatedContentScope.current,
+                                this@SharedTransitionLayout,
+                                {
+                                    navigate(
+                                        NavRoutes.PreGameShowRolesScreen(
+                                            it,
+                                            null
+                                        )
+                                    )
+                                })
+                        }
+
+                        is NavRoutes.PreGameShowRolesScreen -> NavEntry(key) {
+                            PreGameShowRoles(
+                                koinViewModel(key = route.toString()) {
+                                    parametersOf(
+                                        route.players,
+                                        route.showingIndex
+                                    )
+                                },
+                                nextShowIndex = {
+                                    if (route.showingIndex == null) {
+                                        navigate(
+                                            NavRoutes.PreGameShowRolesScreen(
+                                                route.players,
+                                                0u
+                                            )
+                                        )
+                                        return@PreGameShowRoles
+                                    } else if (route.showingIndex + 1u >= route.players.size.toUInt()) {
+                                        //all shown, go to game screen
+                                        navigate(
+                                            NavRoutes.GameScreen.GameScreenStart(
+                                                route.players
+                                            )
+                                        )
+                                        return@PreGameShowRoles
+                                    } else {
+                                        navigate(
+                                            NavRoutes.PreGameShowRolesScreen(
+                                                route.players,
+                                                route.showingIndex + 1u
+                                            )
+                                        )
+                                    }
+                                },
+
+                                )
+                        }
+
+                        is NavRoutes.GameScreen -> NavEntry(key) {
+                            val nextGame: (Either<GameEnd, Game>) -> Unit = {
+                                println("navigating: $it")
+                                navigate(NavRoutes.GameScreen.GameScreenTurn(it))
+                            }
+                            when (route) {
+                                is NavRoutes.GameScreen.GameScreenStart -> GameScreen(
+                                    Game(route.players)!!.right(),
+                                    nextGame
+                                )
+
+                                is NavRoutes.GameScreen.GameScreenTurn -> GameScreen(route.game, nextGame)
+                            }
                         }
                     }
                 }
-            }
-        )
+            )
+        }
     }
 }
 
 @Composable
 private fun RowScope.AppBarContents(
     onBack: () -> Unit,
-    backEnabled: Boolean
+    backEnabled: Boolean,
 ): Unit {
     Button(onClick = onBack, enabled = backEnabled) {
         Text("Retour")
@@ -205,7 +232,7 @@ fun MusicProgressBar(
     progress: Float,
     isPaused: Boolean,
     colorSet: ColorSet = LocalAccentColorSet.current,
-    modifier: Modifier
+    modifier: Modifier,
 ) =
     ProvideContentColorSet(colorSet) {
         val animatableProgress = remember { Animatable(progress) }

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,17 +33,19 @@ enum class CardSide {
 @Composable
 fun Carte(
     modifier: Modifier = Modifier,
-    frontSide: Role?,
+    front: Role?,
     wantedSide: CardSide = CardSide.FrontSide,
-    overCard: (@Composable BoxScope.() -> Unit) = { },
+    overFront: (@Composable BoxScope.() -> Unit) = {},
+    overBack: (@Composable BoxScope.() -> Unit) = { },
+    overBoth: (@Composable BoxScope.() -> Unit) = {},
 ) {
 
-    val shape = Theme.shapes.card
+    val shape = RoundedCornerShape(6)
     val spec = tween<Float>(500, easing = EaseInOutQuad)
 
 
     var shownSide by remember { mutableStateOf(wantedSide) }
-    val rotationTransition = remember(frontSide) { Animatable(
+    val rotationTransition = remember { Animatable(
         when(shownSide){
             CardSide.FrontSide -> 0f
             CardSide.BackSide -> 180f
@@ -52,7 +55,7 @@ fun Carte(
     val flipped = shownSide == CardSide.BackSide
 
     val actualRole = when (shownSide) {
-        CardSide.FrontSide -> frontSide
+        CardSide.FrontSide -> front
         CardSide.BackSide -> null
     }
     val scope = rememberCoroutineScope()
@@ -107,8 +110,12 @@ fun Carte(
                 .fillMaxSize()
 
         )
-
-        overCard()
+       if(shownSide == CardSide.BackSide) {
+           overBack()
+       } else {
+           overFront()
+       }
+        overBoth()
 
     }
 }

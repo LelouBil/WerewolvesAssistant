@@ -28,7 +28,7 @@ kotlin {
 
 
     compilerOptions {
-        freeCompilerArgs.set(listOf("-Xcontext-parameters", "-Xconsistent-data-class-copy-visibility"))
+        freeCompilerArgs.set(listOf("-Xcontext-parameters", "-Xconsistent-data-class-copy-visibility","-Xexpect-actual-classes"))
     }
 
     listOf(
