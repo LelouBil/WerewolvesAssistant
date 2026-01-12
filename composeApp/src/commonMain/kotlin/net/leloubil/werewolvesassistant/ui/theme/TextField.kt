@@ -1,6 +1,7 @@
 package net.leloubil.werewolvesassistant.ui.theme
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.Composable
@@ -25,9 +26,12 @@ fun TextField(
         singleLine = maxLines == 1,
         maxLines = maxLines,
         fontSize = fontSize,
-        modifier = modifier.background(Color.Cyan).border(2.dp, colorSet.border, Theme.shapes.surface),
+        modifier = modifier.background(Color.White).border(2.dp, colorSet.border, Theme.shapes.surface),
         editable = editable,
     ) {
-        TextInput(modifier = Modifier.fillMaxHeight(), placeholder = placeholder)
+        TextInput(
+            modifier = Modifier.fillMaxHeight(), placeholder = placeholder,
+            contentPadding = PaddingValues(Theme.spacing.small)
+        )
     }
 }
