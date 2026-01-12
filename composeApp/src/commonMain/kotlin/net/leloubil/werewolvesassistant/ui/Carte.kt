@@ -90,13 +90,13 @@ fun Carte(
                 scaleX = if (flipped) -1f else 1f
                 cameraDistance = 25 * density
             }
-            .aspectRatio(1f, true)
+            .then(modifier)
+            .aspectRatio(1f, false)
             .clip(shape)
             .border(
                 Theme.spacing.small, LocalAccentColorSet.current.border,
                 shape
             )
-            .then(modifier)
     ) {
         val (image, desc) = actualRole?.let { it.image to pluralStringResource(it.name, 1) }
             ?: (Res.drawable.card_back to "Face cachée")
