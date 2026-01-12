@@ -10,7 +10,7 @@ plugins {
     alias(libs.plugins.kotlinPluginSerialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.kotest)
-    alias(libs.plugins.vlcSetup)
+//    alias(libs.plugins.vlcSetup)
     alias(libs.plugins.detekt)
 }
 
@@ -158,9 +158,10 @@ dependencies {
 
     fun myksp(dep: Any) {
         add("kspCommonMainMetadata", dep)
-//        add("kspAndroid", dep)
-//        add("kspIosArm64", dep)
-//        add("kspIosSimulatorArm64", dep)
+        add("kspJvm", dep)
+        add("kspAndroid", dep)
+        add("kspIosArm64", dep)
+        add("kspIosSimulatorArm64", dep)
     }
     myksp(libs.arrow.optics.ksp)
     myksp(libs.koin.ksp)
@@ -188,14 +189,14 @@ compose.desktop {
 tasks.withType<JavaExec> {
     systemProperty("compose.application.resources.dir", file("appResources").absolutePath)
 }
-vlcSetup {
-    vlcVersion = "3.0.21"
-    shouldCompressVlcFiles = true
-    shouldIncludeAllVlcFiles = false
-    pathToCopyVlcLinuxFilesTo = desktopAssetsDir.resolve("linux-x64/")
-    pathToCopyVlcMacosFilesTo = desktopAssetsDir.resolve("macos-arm64/")
-    pathToCopyVlcWindowsFilesTo = desktopAssetsDir.resolve("windows-x64/")
-}
+//vlcSetup {
+//    vlcVersion = "3.0.21"
+//    shouldCompressVlcFiles = true
+//    shouldIncludeAllVlcFiles = false
+//    pathToCopyVlcLinuxFilesTo = desktopAssetsDir.resolve("linux-x64/")
+//    pathToCopyVlcMacosFilesTo = desktopAssetsDir.resolve("macos-arm64/")
+//    pathToCopyVlcWindowsFilesTo = desktopAssetsDir.resolve("windows-x64/")
+//}
 
 // Trigger Common Metadata Generation from Native tasks
 tasks.matching { it.name.startsWith("ksp") && it.name != "kspCommonMainKotlinMetadata" }.configureEach {

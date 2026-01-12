@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import org.koin.core.annotation.Provided
 import org.koin.core.annotation.Singleton
 import org.openani.mediamp.MediampPlayer
 import org.openani.mediamp.PlaybackState
@@ -56,17 +57,12 @@ interface MusicService {
 }
 
 
-interface ContextWrapper {
-    val context: Any
-}
 
-@Singleton //todo android
-class DummyContextWrapper : ContextWrapper {
-    override val context: Any = Unit
-}
+
+
 
 @Singleton
-class MusicServiceImpl(private val context: ContextWrapper) : MusicService {
+class MusicServiceImpl(@Provided private val context: ContextWrapper) : MusicService {
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val player = MediampPlayer(context.context, scope.coroutineContext)
 

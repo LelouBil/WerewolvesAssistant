@@ -72,6 +72,10 @@ fun PreGameShowRoles(viewModel: PreGameShowRolesViewModel, nextShowIndex: () -> 
                 var isHeldDown by remember { mutableStateOf(false) }
                 LaunchedEffect(isHeldDown) {
                     if (isHeldDown) {
+                        if(shownSide == CardSide.FrontSide){
+                            shownSide = CardSide.BackSide
+                            return@LaunchedEffect
+                        }
                         progress.animateTo(
                             1f,
                             tween(durationMillis = 2.seconds.toInt(DurationUnit.MILLISECONDS), easing = LinearEasing)
