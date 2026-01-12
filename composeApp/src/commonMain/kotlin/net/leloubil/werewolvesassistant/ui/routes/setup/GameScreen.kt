@@ -3,30 +3,52 @@ package net.leloubil.werewolvesassistant.ui.routes.setup
 import androidx.compose.animation.animateColor
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.dp
 import arrow.core.Either
 import arrow.core.raise.either
 import com.composeunstyled.Icon
 import com.composeunstyled.LocalContentColor
 import com.composeunstyled.Text
-import net.leloubil.werewolvesassistant.engine.*
+import net.leloubil.werewolvesassistant.engine.ConfirmationStepPrompt
+import net.leloubil.werewolvesassistant.engine.Game
+import net.leloubil.werewolvesassistant.engine.GameEnd
+import net.leloubil.werewolvesassistant.engine.GameStepData
+import net.leloubil.werewolvesassistant.engine.GameStepPrompt
+import net.leloubil.werewolvesassistant.engine.GameStepPromptChoosePlayer
+import net.leloubil.werewolvesassistant.engine.PlayerName
+import net.leloubil.werewolvesassistant.engine.Role
+import net.leloubil.werewolvesassistant.engine.getPlayerNames
+import net.leloubil.werewolvesassistant.ui.Carte
 import net.leloubil.werewolvesassistant.ui.icons.MaterialSymbolsSkull
 import net.leloubil.werewolvesassistant.ui.theme.Button
 import net.leloubil.werewolvesassistant.ui.theme.Checkbox
 import net.leloubil.werewolvesassistant.ui.theme.LocalAccentColorSet
 import net.leloubil.werewolvesassistant.ui.theme.Theme
+import org.jetbrains.compose.resources.pluralStringResource
 
 
 fun <T> Either<Nothing, T>.infaillible(): T = when (this) {
@@ -103,10 +125,11 @@ private fun ThemeWrapper(game: Game, body: @Composable () -> Unit) {
     Box(
         Modifier.fillMaxSize()
     ) {
-        Box(modifier = Modifier.fillMaxSize().graphicsLayer {
+        Box(
+            modifier = Modifier.fillMaxSize().graphicsLayer {
 //            blendMode = BlendMode.Difference
-            alpha = 0.8f
-        }.background(backgroundColor)
+                alpha = 0.8f
+            }.background(backgroundColor)
         ) {
 
         }
@@ -128,68 +151,114 @@ fun GameProcess(
     prompt: GameStepPrompt<*, *>?,
     promptProcessor: ProcessPrompt,
 ) = ThemeWrapper(game) {
-    if (prompt == null) {
-        Text("null")
-        return@ThemeWrapper
-    }
-    when (prompt) {
-        is ConfirmationStepPrompt<*> -> Column {
-            Text(prompt.toString())
-            val info = prompt.getInfo(game)
-            Text(info.toString())
-            Text(info.destination.toString())
-            Button(onClick = {
-                println("lol")
-                promptProcessor.processConfirm(game, prompt)
-            }) {
-                Text("Confirm")
-            }
-
+    Column(
+        Modifier.fillMaxWidth().padding(Theme.spacing.medium),
+        verticalArrangement = Arrangement.spacedBy(Theme.spacing.large)
+    ) {
+        if (prompt == null) {
+            Text("null")
+            return@ThemeWrapper
         }
-
-        is GameStepPromptChoosePlayer<*, *> -> {
-            ChoosePlayerPrompt(prompt, game, promptProcessor)
-        }
-
-        is GameStepPrompt.CupidSetLovers -> Column {
-            val lovers = remember { mutableStateListOf<PlayerName>() }
-
-            Text("Cupid Set Lovers")
-
-            game.players.forEach { p ->
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Checkbox(
-                        checked = lovers.contains(p),
-                        onCheckedChange = { checked ->
-                            if (checked) {
-                                lovers.add(p)
-                            } else {
-                                lovers.remove(p)
-                            }
-                        },
-                        enabled = lovers.contains(p) || lovers.size < 2
-                    )
-                    Text(p.name)
+        when (prompt) {
+            is ConfirmationStepPrompt<*> -> {
+                SimpleGameProcess(game, prompt) {
+                    promptProcessor.processConfirm(game, prompt)
                 }
             }
 
-            Button(
-                onClick = {
-                    promptProcessor.processPrompt(
-                        game,
-                        prompt,
-                        GameStepPrompt.CupidSetLovers.Data(lovers[0], lovers[1])
-                    )
-                },
-                enabled = lovers.size == 2
-            ) {
-                Text("Set Lovers")
+            is GameStepPromptChoosePlayer<*, *> -> {
+                ChoosePlayerPrompt(prompt, game, promptProcessor)
             }
+
+            is GameStepPrompt.CupidSetLovers -> Column {
+                val lovers = remember { mutableStateListOf<PlayerName>() }
+
+                Text("Cupid Set Lovers")
+
+                game.players.forEach { p ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = lovers.contains(p),
+                            onCheckedChange = { checked ->
+                                if (checked) {
+                                    lovers.add(p)
+                                } else {
+                                    lovers.remove(p)
+                                }
+                            },
+                            enabled = lovers.contains(p) || lovers.size < 2
+                        )
+                        Text(p.name)
+                    }
+                }
+
+                Button(
+                    onClick = {
+                        promptProcessor.processPrompt(
+                            game,
+                            prompt,
+                            GameStepPrompt.CupidSetLovers.Data(lovers[0], lovers[1])
+                        )
+                    },
+                    enabled = lovers.size == 2
+                ) {
+                    Text("Set Lovers")
+                }
+            }
+
+            is GameStepPrompt.WitchStep -> WitchStep(promptProcessor, game, prompt)
+        }
+    }
+}
+
+@Composable
+private fun <P : ConfirmationStepPrompt<D>, D : ConfirmationStepPrompt.Info> ColumnScope.SimpleGameProcess(
+    game: Game,
+    prompt: P,
+    onConfirm: () -> Unit,
+) {
+    when (prompt) {
+        GameStepPrompt.NightBegin -> {
+            Text(
+                "À destination de tous",
+                Modifier.fillMaxWidth().padding(bottom = Theme.spacing.medium),
+                Theme.typography.body.copy(textDecoration = TextDecoration.Underline)
+            )
+            Text("La nuit tombe sur le village. Tout le monde s'endort", style = Theme.typography.title)
         }
 
-        is GameStepPrompt.WitchStep -> WitchStep(promptProcessor, game, prompt)
+        GameStepPrompt.SeerShow -> {
+            val info = prompt.getInfo(game)
+            Text(
+                "À destination de la voyante : ${game.getPlayerNames<Role.Seer>().joinToString(", ") { it.name }}",
+                style = Theme.typography.body.copy(textDecoration = TextDecoration.Underline)
+            )
+            Text(
+                "${info.player.name} est ${pluralStringResource(info.role.name, 1)}",
+                Modifier.fillMaxWidth(),
+                style = Theme.typography.title
+            )
+
+            Carte(Modifier.align(Alignment.CenterHorizontally).fillMaxWidth(.5f), frontSide = info.role)
+        }
+
+        else -> {
+            val info = prompt.getInfo(game)
+            Text(prompt.toString())
+            Text(info.toString())
+//            Text(info.destination.toString())
+        }
+
+        // GameStepPrompt.NightEnd -> TODO()
+        // is GameStepPrompt.DeathByLove -> TODO()
+        // GameStepPrompt.GuardResurrect -> TODO()
+        // GameStepPrompt.WitchShow -> TODO()
+    }
+
+    Button(onClick = onConfirm, Modifier.align(Alignment.CenterHorizontally)) {
+        Text("Confirm")
     }
 }
 
@@ -200,11 +269,11 @@ private enum class WitchAction {
 }
 
 @Composable
-private fun WitchStep(
+private fun ColumnScope.WitchStep(
     promptProcessor: ProcessPrompt,
     game: Game,
     prompt: GameStepPrompt.WitchStep,
-) = Column {
+) {
     var action by remember { mutableStateOf<WitchAction?>(null) }
 
     Row {
@@ -277,12 +346,13 @@ private fun WitchStep(
 }
 
 @Composable
-private fun ChoosePlayerPrompt(
+private fun ColumnScope.ChoosePlayerPrompt(
     prompt: GameStepPromptChoosePlayer<*, *>,
     game: Game,
     promptProcessor: ProcessPrompt,
-) = Column {
+) {
     Text(prompt.toString())
+
     @Composable
     fun <P : GameStepPromptChoosePlayer<D, E>, D : GameStepData, E> PP(prompt: P, data: (PlayerName) -> D) =
         PlayerPicker(
@@ -295,7 +365,20 @@ private fun ChoosePlayerPrompt(
     when (prompt) {
         is GameStepPrompt.GuardProtect -> PP(prompt, GameStepPrompt.GuardProtect::Data)
         is GameStepPrompt.SeerSee -> PP(prompt, GameStepPrompt.SeerSee::Data)
-        is GameStepPrompt.WerewolvesKill -> PP(prompt, GameStepPrompt.WerewolvesKill::Data)
+        is GameStepPrompt.WerewolvesKill -> {
+            Text(
+                "À destination des loups-garous : ${
+                    game.getPlayerNames<Role.CalledWithWolves>().joinToString(", ") { it.name }
+                }",
+                style = Theme.typography.body.copy(textDecoration = TextDecoration.Underline)
+            )
+            Text(
+                "Les loups-garous se réveillent et choisissent une victime",
+                style = Theme.typography.title
+            )
+            PP(prompt, GameStepPrompt.WerewolvesKill::Data)
+        }
+
         is GameStepPrompt.WhiteWolfKill -> PP(prompt, GameStepPrompt.WhiteWolfKill::Data)
         is GameStepPrompt.HunterKill -> PP(prompt, GameStepPrompt.HunterKill::Data)
         is GameStepPrompt.MayorElection -> PP(prompt, GameStepPrompt.MayorElection::Data)
@@ -304,14 +387,14 @@ private fun ChoosePlayerPrompt(
 }
 
 @Composable
-fun <P : GameStepPrompt<D, E>, D : GameStepData, E> PlayerPicker(
+fun <P : GameStepPrompt<D, E>, D : GameStepData, E> ColumnScope.PlayerPicker(
     game: Game,
     x0: Set<PlayerName>,
     prompt: P,
     x1: ProcessPrompt,
     x2: (PlayerName) -> D,
-) = Column {
-    Text("PlayerPicker")
+) {
+    Text("Sélectionner un joueur :")
     var error by remember { mutableStateOf<E?>(null) }
     error?.let { Text(it.toString()) }
     x0.forEach { playerName ->
@@ -320,9 +403,10 @@ fun <P : GameStepPrompt<D, E>, D : GameStepData, E> PlayerPicker(
                 x1.processPrompt(game, prompt, x2(playerName))?.let {
                     error = it
                 }
-            }
+            },
+            Modifier.defaultMinSize(minWidth = 128.dp).align(Alignment.CenterHorizontally)
         ) {
-            Text(playerName.toString())
+            Text(playerName.name)
         }
     }
 }

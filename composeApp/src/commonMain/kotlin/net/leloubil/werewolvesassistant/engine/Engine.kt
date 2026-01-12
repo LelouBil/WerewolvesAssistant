@@ -46,9 +46,7 @@ sealed interface Destination {
 sealed class ConfirmationStepPrompt<I : ConfirmationStepPrompt.Info> :
     GameStepPrompt<I, Nothing>() {
 
-    interface Info : GameStepData {
-        val destination: Destination
-    }
+    interface Info : GameStepData
 
     override fun checkStepData(game: Game, data: I): Nothing? = null
     abstract fun getInfo(game: Game): I
@@ -155,9 +153,7 @@ sealed class GameStepPrompt<T : GameStepData, E> {
 
 
     data object NightBegin : ConfirmationStepPrompt<NightBegin.Info>() {
-        data object Info : ConfirmationStepPrompt.Info {
-            override val destination: Destination = Destination.All
-        }
+        data object Info : ConfirmationStepPrompt.Info
 
         override fun exists(game: Game): Boolean = true
         override fun getInfo(game: Game): Info = Info
@@ -166,7 +162,6 @@ sealed class GameStepPrompt<T : GameStepData, E> {
     data object NightEnd : ConfirmationStepPrompt<NightEnd.Info>() {
         data class Info(val deathsSummary: List<Pair<PlayerName, List<Role>>>) : ConfirmationStepPrompt.Info,
             GameStepData.MarksPublicKilled {
-            override val destination: Destination = Destination.All
 
             override val killed: Set<PlayerName> = deathsSummary.map { it.first }.toSet()
         }
@@ -188,7 +183,6 @@ sealed class GameStepPrompt<T : GameStepData, E> {
 
     data class DeathByLove(val dead: PlayerName) : ConfirmationStepPrompt<DeathByLove.Info>() {
         data class Info(val dead: PlayerName) : ConfirmationStepPrompt.Info, GameStepData.MarksPublicKilled {
-            override val destination: Destination = Destination.All
             override val killed: Set<PlayerName> = setOf(dead)
         }
 
@@ -253,7 +247,6 @@ sealed class GameStepPrompt<T : GameStepData, E> {
 
     data object GuardResurrect : ConfirmationStepPrompt<GuardResurrect.Info>() {
         data class Info(val resurrected: PlayerName?) : ConfirmationStepPrompt.Info, GameStepData.MarksAlive {
-            override val destination: Destination = Destination.None
             override val alive: Set<PlayerName> = resurrected?.let { setOf(it) }.orEmpty()
         }
 
@@ -272,9 +265,7 @@ sealed class GameStepPrompt<T : GameStepData, E> {
     }
 
     data object WitchShow : ConfirmationStepPrompt<WitchShow.Info>() {
-        data class Info(val killedByWolves: PlayerName?) : ConfirmationStepPrompt.Info {
-            override val destination: Destination = Destination.Specific(Role.Witch)
-        }
+        data class Info(val killedByWolves: PlayerName?) : ConfirmationStepPrompt.Info
 
         override fun exists(game: Game): Boolean = game.hasAliveRole(Role.Witch)
         override fun getInfo(game: Game): Info {
@@ -472,9 +463,7 @@ sealed class GameStepPrompt<T : GameStepData, E> {
     }
 
     data object SeerShow : ConfirmationStepPrompt<SeerShow.Info>() {
-        data class Info(val player: PlayerName, val role: Role) : ConfirmationStepPrompt.Info {
-            override val destination: Destination = Destination.Specific(Role.Seer)
-        }
+        data class Info(val player: PlayerName, val role: Role) : ConfirmationStepPrompt.Info
 
         override fun exists(game: Game): Boolean = game.hasAliveRole(Role.Seer)
         override fun getInfo(game: Game): Info {

@@ -186,6 +186,9 @@ fun Game.getRoles(player: PlayerName): List<Role> =
         it.assignments[player]
     }
 
+inline fun <reified T : Role> Game.getPlayerNames(): List<PlayerName> =
+    players.filter { p -> getRoles(p).filterIsInstance<T>().any() }
+
 fun Game.getLivingState(player: PlayerName): Game.LivingState {
     return steps.asReversed().firstNotNullOfOrNull {
         when (it) {
