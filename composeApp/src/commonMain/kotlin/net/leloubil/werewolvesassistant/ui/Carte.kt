@@ -94,7 +94,7 @@ fun Carte(
                 cameraDistance = 25 * density
             }
             .then(modifier)
-            .aspectRatio(1f, false)
+            .aspectRatio(1f, true)
             .clip(shape)
             .border(
                 Theme.spacing.small, LocalAccentColorSet.current.border,
