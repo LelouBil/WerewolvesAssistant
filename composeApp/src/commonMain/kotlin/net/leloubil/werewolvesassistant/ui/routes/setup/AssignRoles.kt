@@ -2,9 +2,6 @@ package net.leloubil.werewolvesassistant.ui.routes.setup
 
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.SharedTransitionScope
-import androidx.compose.foundation.background
-import androidx.compose.foundation.draganddrop.dragAndDropSource
-import androidx.compose.foundation.draganddrop.dragAndDropTarget
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -12,18 +9,17 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draganddrop.DragAndDropEvent
-import androidx.compose.ui.draganddrop.DragAndDropTarget
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
 import androidx.lifecycle.ViewModel
 import arrow.core.mapValuesNotNull
 import com.composeunstyled.Text
+import com.mohamedrejeb.compose.dnd.DragAndDropContainer
+import com.mohamedrejeb.compose.dnd.drag.DraggableItem
+import com.mohamedrejeb.compose.dnd.drop.dropTarget
+import com.mohamedrejeb.compose.dnd.rememberDragAndDropState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,11 +29,8 @@ import net.leloubil.werewolvesassistant.engine.Role
 import net.leloubil.werewolvesassistant.engine.RolesList
 import net.leloubil.werewolvesassistant.ui.CardSide
 import net.leloubil.werewolvesassistant.ui.Carte
-import net.leloubil.werewolvesassistant.ui.getStringData
-import net.leloubil.werewolvesassistant.ui.plainTextDragDrop
 import net.leloubil.werewolvesassistant.ui.theme.Button
 import net.leloubil.werewolvesassistant.ui.theme.Theme
-import net.leloubil.werewolvesassistant.ui.theme.background
 import org.koin.android.annotation.KoinViewModel
 import org.koin.core.annotation.InjectedParam
 
@@ -116,6 +109,9 @@ fun AssignRolesMenu(
 
         val visualRolesList = viewModel.roles
 
+        val state = rememberDragAndDropState<String>()
+
+        DragAndDropContainer(state) {
         //todo mieux https://github.com/MohamedRejeb/compose-dnd
         LazyVerticalGrid(
             GridCells.FixedSize(75.dp), modifier = Modifier
@@ -129,43 +125,46 @@ fun AssignRolesMenu(
                 val pickedByPlayer = assignments.any { (k, v) -> v?.second == key }
                 val shownSide = CardSide.FrontSide
                 val visibleRole = role
-                val target = remember {
-                    object : DragAndDropTarget {
-                        override fun onDrop(event: DragAndDropEvent): Boolean {
-                            val data = event.getStringData()
-                            if (data != null) {
-                                viewModel.clearAssignment(data)
-                                return true
-                            } else return false
-                        }
-
-                    }
-                }
-                Carte(
-                    Modifier.animateItem()
-                        .fillMaxHeight().let {
-                            with(sharedTransitionScope) {
-                                it.sharedElement(
-                                    this.rememberSharedContentState(key),
-                                    animatedVisibilityScope = animatedVisibilityScope
-                                )
+                    DraggableItem(
+                        Modifier.then(
+                            if(!pickedByPlayer) {
+                                Modifier
+                            } else {
+                                Modifier
                             }
-                        }.then(
-                            if (pickedByPlayer)
-                                Modifier.dragAndDropTarget({
-                                    val data = it.getStringData()
-                                    data == key
-                                }, target = target)
-                            else {
-                                Modifier.dragAndDropSource { _ ->
-                                    plainTextDragDrop(key)
+                        ),
+                        key = key, data = key, state = state, enabled = !pickedByPlayer, draggableContent = {
+                        Carte(Modifier.fillMaxHeight(),visibleRole, CardSide.FrontSide)
+                    })  {
+                        Carte(
+                            Modifier.animateItem()
+                                .fillMaxHeight().let {
+                                    with(sharedTransitionScope) {
+                                        it.sharedElement(
+                                            this.rememberSharedContentState(key),
+                                            animatedVisibilityScope = animatedVisibilityScope
+                                        )
+                                    }
                                 }
-                            }
-                        ).graphicsLayer {
-                            alpha = if (pickedByPlayer) absentAlpha else presentAlpha
-                        }, visibleRole, shownSide
-                )
+//                            .then(
+//                                if (pickedByPlayer)
+//                                    Modifier.dragAndDropTarget({
+//                                        val data = it.getStringData()
+//                                        data == key
+//                                    }, target = target)
+//                                else {
+//                                    Modifier.dragAndDropSource { _ ->
+//                                        plainTextDragDrop(key)
+//                                    }
+//                                }
+//                            )
+                                .graphicsLayer {
+                                    alpha = if (pickedByPlayer) absentAlpha else presentAlpha
+                                }, visibleRole, shownSide
+                        )
+                    }
 //                }
+                }
             }
         }
 
@@ -177,42 +176,60 @@ fun AssignRolesMenu(
                 println("assignment: $player, $p")
                 Row(Modifier.height(85.dp)) {
                     Text(player.name, style = Theme.typography.buttonTitle)
-                    val target = remember(player) {
-                        object : DragAndDropTarget {
-                            override fun onDrop(event: DragAndDropEvent): Boolean {
-                                val data = event.getStringData()
-                                if (data != null) {
-                                    viewModel.assign(player, data)
-                                    return true
-                                }
-                                return false
-                            }
+//                    val target = remember(player) {
+//                        object : DragAndDropTarget {
+//                            override fun onDrop(event: DragAndDropEvent): Boolean {
+//                                val data = event.getStringData()
+//                                if (data != null) {
+//                                    viewModel.assign(player, data)
+//                                    return true
+//                                }
+//                                return false
+//                            }
+//
+//                        }
+//                    }
 
-                        }
-                    }
-
-                    Carte(
+                                       Carte(
                         Modifier.graphicsLayer {
                             alpha = if (p == null) absentAlpha else presentAlpha
                         },
                         front = p?.first,
                         wantedSide = if (p == null) CardSide.BackSide else CardSide.FrontSide,
-                    overBoth = {
-                        Box(
-                            Modifier.fillMaxSize().dragAndDropTarget({
-                            val data = it.getStringData()
-                            data != null && visualRolesList.any { (r, k) -> k == data }
+                        overBoth = {
+                            Box(Modifier.fillMaxSize().dropTarget(state = state, key = player.name, onDrop = {
+                                viewModel.assign(player,it.data)
+                            }))
+                            if(p != null) {
+                                DraggableItem(Modifier.fillMaxSize(),
+                                    key = player.name + p.second,
+                                    state = state,
+                                    dropTargets = viewModel.roles.map { it.second },
+                                    data = p.second,
+                                    draggableContent = {
+                                        Carte(Modifier,p.first, CardSide.FrontSide)
+                                    }
+                                ) {
 
-                        }, target = target).then(
-                            if (p != null) {
-                                Modifier.dragAndDropSource {_ ->
-                                    plainTextDragDrop(p.second)
                                 }
-                            } else Modifier
-                        )) {
+                            }
 
-                        }
-                    })
+
+//                            Box(
+//                                Modifier.fillMaxSize().dragAndDropTarget({
+//                                    val data = it.getStringData()
+//                                    data != null && visualRolesList.any { (r, k) -> k == data }
+//
+//                                }, target = target).then(
+//                                    if (p != null) {
+//                                        Modifier.dragAndDropSource { _ ->
+//                                            plainTextDragDrop(p.second)
+//                                        }
+//                                    } else Modifier
+//                                )) {
+//
+//                            }
+                        })
                 }
             }
         }

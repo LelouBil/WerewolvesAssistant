@@ -63,6 +63,7 @@ kotlin {
             implementation(libs.bundles.koin)
             implementation(libs.klogging)
             implementation(libs.mediaPlayer)
+            implementation(libs.dragdrop)
         }
         commonTest.dependencies {
             implementation(libs.bundles.kotest)

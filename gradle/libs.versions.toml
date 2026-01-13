@@ -76,6 +76,7 @@ unstyled = { module = "com.composables:composeunstyled", version.ref = "composeU
 unstyled-theming = { module = "com.composables:composeunstyled-theming", version.ref = "composeUnstyled"}
 unstyled-primitives = { module = "com.composables:composeunstyled-primitives", version.ref = "composeUnstyled"}
 unstyled-platformTheme = { module = "com.composables:composeunstyled-platformtheme", version.ref = "composeUnstyled"}
+dragdrop = {module = "com.mohamedrejeb.dnd:compose-dnd", version = "0.3.0"}
 
 
 [bundles]
