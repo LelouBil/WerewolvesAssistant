@@ -1,27 +1,19 @@
 package net.leloubil.werewolvesassistant.ui.routes.setup
 
-import androidx.compose.animation.AnimatedVisibilityScope
-import androidx.compose.animation.SharedTransitionScope
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.animation.*
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyGridItemScope
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import arrow.core.mapValuesNotNull
@@ -123,163 +115,237 @@ class AssignRolesViewModel(@InjectedParam val players: List<PlayerName>, @Inject
 @Composable
 fun AssignRolesMenu(
     viewModel: AssignRolesViewModel,
-    animatedVisibilityScope: AnimatedVisibilityScope,
-    sharedTransitionScope: SharedTransitionScope,
+    navAnimatedVisibilityScope: AnimatedVisibilityScope,
+    navSharedTransitionScope: SharedTransitionScope,
     preGame: (RolesList) -> Unit,
 ) {
 
     val state = rememberReorderState<String>()
     val cardSize = 85.dp
 
+    val vmAssignments by viewModel.assignments.collectAsState()
+    val p1 = vmAssignments.mapValuesNotNull { (_, r) -> r?.first }
+    val rolesList = viewModel.players.mapNotNull { pname -> p1[pname]?.let { pname to it } }
     SharedTransitionScope { modifier ->
-        ReorderContainer(state, modifier.fillMaxSize()) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(Theme.spacing.medium),
-                modifier = Modifier.fillMaxSize().padding(vertical = Theme.spacing.small).fillMaxHeight()
-            ) {
-                val absentAlpha = 0.5f
-                val presentAlpha = 1f
-                val assignments by viewModel.assignments.collectAsState()
-
-                val p1 = assignments.mapValuesNotNull { (_, r) -> r?.first }
-                val rolesList = viewModel.players.mapNotNull { pname -> p1[pname]?.let { pname to it } }
-
-                val visualRolesList = viewModel.roles
+            val screenSharedTransitionScope = this@SharedTransitionScope
+            ReorderContainer(state, modifier.fillMaxSize()) {
+                AnimatedContent(vmAssignments,Modifier.fillMaxSize(), transitionSpec = {EnterTransition.None.togetherWith(
+                    ExitTransition.None)}) { assignments ->
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(Theme.spacing.medium),
+                        modifier = Modifier.fillMaxSize().padding(vertical = Theme.spacing.small).fillMaxHeight()
+                    ) {
+                        val absentAlpha = 0.5f
 
 
-                LazyVerticalGrid(
-                    GridCells.FixedSize(cardSize),
-                    horizontalArrangement = Arrangement.spacedBy(Theme.spacing.medium, Alignment.CenterHorizontally),
-                    verticalArrangement = Arrangement.spacedBy(Theme.spacing.medium),
-                    modifier = Modifier
-                        .padding(horizontal = Theme.spacing.medium)
-                        .widthIn(
-                            max = cardSize * visualRolesList.size + Theme.spacing.medium * (visualRolesList.size - 1)
-                        ),
-                ) {
-                    items(
-                        visualRolesList,
-                        key = { (role, i) -> i }
-                    ) { (role, key) ->
-                        val pickedByPlayer = assignments.any { (k, v) -> v?.second == key }
+                        val visualRolesList = viewModel.roles
 
-                        Box(
-                            Modifier.height(cardSize).aspectRatio(1f).animateItem()
+
+
+                        LazyVerticalGrid(
+                            GridCells.FixedSize(cardSize),
+                            horizontalArrangement = Arrangement.spacedBy(
+                                Theme.spacing.medium,
+                                Alignment.CenterHorizontally
+                            ),
+                            verticalArrangement = Arrangement.spacedBy(Theme.spacing.medium),
+                            modifier = Modifier
+                                .padding(horizontal = Theme.spacing.medium)
+                                .widthIn(
+                                    max = cardSize * visualRolesList.size + Theme.spacing.medium * (visualRolesList.size - 1)
+                                ),
                         ) {
-                            Carte(
-                                Modifier.fillMaxSize()
-                                    .let {
-                                        with(sharedTransitionScope) {
-                                            it.sharedElement(
-                                                this.rememberSharedContentState(key),
-                                                animatedVisibilityScope = animatedVisibilityScope
-                                            ).then(
-                                                if (!pickedByPlayer) {
-                                                    Modifier.animateItem()
-                                                } else Modifier
-                                            )
-                                        }
-                                    }.alpha(absentAlpha), role
-                            )
-                            DraggableItemNotLeftBehind(
-                                modifier = Modifier.fillMaxSize(),
-                                key = key,
-                                data = key,
-                                state = state,
-                                enabled = !pickedByPlayer,
-                                dropTargets = viewModel.players.map { it.name },
-                                onDrop = {
-                                    println("Dropping ${it.data} on $key from ${it.key}")
-                                    viewModel.clearAssignment(it.data)
-                                }
-                            ) {
-                                if (!pickedByPlayer) {
-                                    Carte(
-                                        Modifier.fillMaxSize().animateItem(),
-                                        role
-                                    )
-                                }
+                            items(
+                                visualRolesList,
+                                key = { (role, i) -> i }) {
+                                DragDropSourceCard(
+                                    it.first, it.second,
+                                    assignments,
+                                    cardSize,
+                                    navSharedTransitionScope,
+                                    navAnimatedVisibilityScope,
+                                    absentAlpha,
+                                    state,
+                                    viewModel,
+                                    screenSharedTransitionScope,
+                                    this@AnimatedContent
+                                )
+                            }
+
+                        }
+
+                        LazyVerticalGrid(
+                            columns = GridCells.FixedSize(cardSize),
+                            horizontalArrangement = Arrangement.spacedBy(
+                                Theme.spacing.medium,
+                                Alignment.CenterHorizontally
+                            ),
+                            modifier = Modifier
+                                .padding(horizontal = Theme.spacing.medium)
+                                .widthIn(
+                                    max = cardSize * (assignments.size) + Theme.spacing.medium * (assignments.size - 1)
+                                ),
+                        ) {
+                            items(assignments.toList()) { (player, p) ->
+                                PlayerRoleTarget(
+                                    cardSize,
+                                    absentAlpha,
+                                    p,
+                                    player,
+                                    state,
+                                    viewModel,
+                                    screenSharedTransitionScope,
+                                    this@AnimatedContent
+                                )
                             }
                         }
-                    }
-                }
 
-                LazyVerticalGrid(
-                    columns = GridCells.FixedSize(cardSize),
-                    horizontalArrangement = Arrangement.spacedBy(Theme.spacing.medium, Alignment.CenterHorizontally),
-                    modifier = Modifier
-                        .padding(horizontal = Theme.spacing.medium)
-                        .widthIn(
-                            max = cardSize * (assignments.size) + Theme.spacing.medium * (assignments.size - 1)
-                        ),
-                ) {
-                    items(assignments.toList()) { (player, p) ->
-                        Column(
-                            Modifier.width(cardSize).animateItem(),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(Theme.spacing.medium)
                         ) {
-                            Box(
-                                Modifier.height(cardSize).aspectRatio(1f)
-                            ) {
-                                Carte(Modifier.alpha(absentAlpha), front = null)
-                                println("Dragdrop ${p?.second} for $player")
-                                DraggableItemNotLeftBehind(
-                                    modifier = Modifier.fillMaxSize(),
-                                    key = player.name,
-                                    state = state,
-                                    enabled = p != null,
-                                    dropTargets = viewModel.players.filter { it != player }
-                                        .map { it.name } + listOf(p?.second ?: ""),
-                                    data = p?.second ?: "",
-                                    onDrop = {
-                                        println("Dropped :${it.data} on $player from ${it.key}")
-                                        viewModel.assignSwap(player, it.data)
-                                    }
-                                ) {
-                                    if (p != null) {
-                                        Carte(
-                                            Modifier.fillMaxSize(),
-                                            p.first,
-                                            CardSide.FrontSide
-                                        )
-                                    }
-                                }
+                            Button(onClick = {
+                                viewModel.assignPlayersRandomly()
+                            }) {
+                                Text(stringResource(Res.string.randomize_button))
                             }
-                            Text(
-                                player.name,
-                                style = Theme.typography.buttonTitle,
-                                modifier = Modifier.align(Alignment.CenterHorizontally)
-                            )
+
+                            Button(onClick = {
+                                viewModel.clearAllAssignments()
+                            }, enabled = assignments.any { it.value != null }) {
+                                Text(stringResource(Res.string.clear_button))
+                            }
+                        }
+
+
+                        Button(onClick = {
+                            if (rolesList.size == viewModel.players.size) {
+                                preGame(rolesList)
+                            }
+                        }, enabled = rolesList.size == viewModel.players.size, colorSet = Theme.colors.secondary) {
+                            Text(stringResource(Res.string.confirm_button))
                         }
                     }
-                }
-
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(Theme.spacing.medium)
-                ) {
-                    Button(onClick = {
-                        viewModel.assignPlayersRandomly()
-                    }) {
-                        Text(stringResource(Res.string.randomize_button))
-                    }
-
-                    Button(onClick = {
-                        viewModel.clearAllAssignments()
-                    }, enabled = assignments.any { it.value != null }) {
-                        Text(stringResource(Res.string.clear_button))
-                    }
-                }
-
-                Button(onClick = {
-                    if (rolesList.size == viewModel.players.size) {
-                        preGame(rolesList)
-                    }
-                }, enabled = rolesList.size == viewModel.players.size, colorSet = Theme.colors.secondary) {
-                    Text(stringResource(Res.string.confirm_button))
                 }
             }
         }
+}
+
+@Composable
+private fun LazyGridItemScope.DragDropSourceCard(
+    role: Role,
+    key: String,
+    assignments: Map<PlayerName, Pair<Role, String>?>,
+    cardSize: Dp,
+    navSharedTransitionScope: SharedTransitionScope,
+    navAnimatedVisibilityScope: AnimatedVisibilityScope,
+    absentAlpha: Float,
+    state: ReorderState<String>,
+    viewModel: AssignRolesViewModel,
+    screenSharedTransitionScope: SharedTransitionScope,
+    screenAnimatedContentScope: AnimatedContentScope
+) {
+    val pickedByPlayer = assignments.any { (k, v) -> v?.second == key }
+
+    Box(
+        Modifier.height(cardSize).aspectRatio(1f).animateItem()
+    ) {
+        Carte(
+            Modifier.fillMaxSize().animateItem()
+                .let {
+                    with(navSharedTransitionScope) {
+                        it.sharedElement(
+                            this.rememberSharedContentState(key),
+                            animatedVisibilityScope = navAnimatedVisibilityScope
+                        )
+                    }
+                }.alpha(absentAlpha), role
+        )
+        DraggableItemNotLeftBehind(
+            modifier = Modifier.fillMaxSize(),
+            key = key,
+            data = key,
+            state = state,
+            enabled = !pickedByPlayer,
+            dropTargets = viewModel.players.map { it.name },
+            onDrop = {
+                println("Dropping ${it.data} on $key from ${it.key}")
+                viewModel.clearAssignment(it.data)
+            }
+        ) {
+            if(!pickedByPlayer) {
+                Carte(
+                    Modifier.animateItem()
+                        .then(with(screenSharedTransitionScope) {
+                            println("sharedelem role: $key, ${it != null}")
+                                Modifier.sharedElement(
+                                    screenSharedTransitionScope
+                                        .rememberSharedContentState(key),
+                                    screenAnimatedContentScope
+                                )
+                        })
+                        .fillMaxSize(),
+                    role
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun LazyGridItemScope.PlayerRoleTarget(
+    cardSize: Dp,
+    absentAlpha: Float,
+    p: Pair<Role, String>?,
+    player: PlayerName,
+    state: ReorderState<String>,
+    viewModel: AssignRolesViewModel,
+    screenSharedTransitionScope: SharedTransitionScope,
+    screenAnimatedContent: AnimatedContentScope
+) {
+    Column(
+        Modifier.width(cardSize).animateItem(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            Modifier.height(cardSize).aspectRatio(1f)
+        ) {
+            Carte(Modifier.alpha(absentAlpha), front = null)
+            println("Dragdrop ${p?.second} for $player")
+            DraggableItemNotLeftBehind(
+                modifier = Modifier.fillMaxSize(),
+                key = player.name,
+                state = state,
+                enabled = p != null,
+                dropTargets = viewModel.players.filter { it != player }
+                    .map { it.name } + listOf(p?.second ?: ""),
+                data = p?.second ?: "",
+                onDrop = {
+                    println("Dropped :${it.data} on $player from ${it.key}")
+                    viewModel.assignSwap(player, it.data)
+                }
+            ) {
+                if(p != null) {
+                    Carte(
+                        it
+                            .then(with(screenSharedTransitionScope) {
+                                Modifier.sharedElement(
+                                    screenSharedTransitionScope.rememberSharedContentState(p?.second ?: ""),
+                                    screenAnimatedContent,
+                                )
+                            })
+                            .fillMaxSize(),
+                        p?.first,
+                        CardSide.FrontSide
+                    )
+                }
+            }
+        }
+        Text(
+            player.name,
+            style = Theme.typography.buttonTitle,
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        )
     }
 }
 
@@ -292,10 +358,11 @@ fun <T> DraggableItemNotLeftBehind(
     dropTargets: List<Any> = emptyList(),
     modifier: Modifier = Modifier,
     onDrop: (DraggedItemState<T>) -> Unit,
-    content: @Composable () -> Unit,
+    content: @Composable (Modifier) -> Unit,
 ) {
     ReorderableItem(
         modifier = modifier,
+        requireFirstDownUnconsumed = false,
         key = key,
         enabled = enabled,
         dropTargets = dropTargets,
@@ -303,12 +370,10 @@ fun <T> DraggableItemNotLeftBehind(
         onDrop = onDrop,
         state = state,
         draggableContent = {
-            content()
+            content(Modifier)
         }
     ) {
-        if (!this.isDragging) {
-            content()
-        }
+        content(if(this.isDragging) {Modifier.alpha(0f)} else Modifier)
     }
 }
 
