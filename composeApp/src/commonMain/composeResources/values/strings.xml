@@ -1,6 +1,15 @@
 <resources>
     <string name="app_name">WerewolvesAssistant</string>
+
     <string name="create_game_button">Nouvelle partie</string>
+    <string name="settings_button">Paramètres</string>
+    <string name="about_button">À propos</string>
+    <string name="exit_button">Quitter</string>
+    <string name="clear_button">Réinitialiser</string>
+    <string name="randomize_button">Aléatoire</string>
+    <string name="confirm_button">Confirmer</string>
+    <string name="cancel_button">Annuler</string>
+
     <!-- region Role names -->
     <plurals name="role_werewolf">
         <item quantity="one">Loup-garou</item>
@@ -47,7 +56,6 @@
     <string name="select_roles_remove">Retirer</string>
     <string name="select_roles_title">Sélection des rôles</string>
     <string name="select_roles_subtitle">Sélectionnez les rôles pour cette partie</string>
-    <string name="select_roles_randomize">Assigner les rôles aléatoirement</string>
     <string name="select_roles_continue">Continuer</string>
     <!-- endregion -->
 

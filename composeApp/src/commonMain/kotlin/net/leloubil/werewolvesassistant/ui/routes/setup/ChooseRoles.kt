@@ -2,33 +2,36 @@ package net.leloubil.werewolvesassistant.ui.routes.setup
 
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.SharedTransitionScope
-import androidx.compose.animation.animateBounds
 import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import com.composeunstyled.Icon
 import com.composeunstyled.Text
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -39,7 +42,6 @@ import net.leloubil.werewolvesassistant.ui.Carte
 import net.leloubil.werewolvesassistant.ui.theme.Button
 import net.leloubil.werewolvesassistant.ui.theme.HorizontalDivider
 import net.leloubil.werewolvesassistant.ui.theme.Theme
-import net.leloubil.werewolvesassistant.ui.theme.background
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.android.annotation.KoinViewModel
@@ -48,7 +50,6 @@ import werewolvesassistant.composeapp.generated.resources.Res
 import werewolvesassistant.composeapp.generated.resources.select_roles_continue
 import werewolvesassistant.composeapp.generated.resources.select_roles_subtitle
 import werewolvesassistant.composeapp.generated.resources.select_roles_title
-import kotlin.time.Duration.Companion.milliseconds
 
 
 @KoinViewModel
@@ -66,7 +67,6 @@ class ChooseRolesMenuViewModel(@InjectedParam val players: List<PlayerName>) : V
     private val _assignments = MutableStateFlow<List<Pair<PlayerName, Role>>?>(null)
     val assignments = _assignments.asStateFlow()
 
-
     fun setRoleCount(role: Role, count: UInt) {
         _assignments.value = null
         _counts.update {
@@ -76,69 +76,78 @@ class ChooseRolesMenuViewModel(@InjectedParam val players: List<PlayerName>) : V
 }
 
 @Composable
-fun ChooseRolesMenu(viewModel: ChooseRolesMenuViewModel,
-                                          animatedVisibilityScope: AnimatedVisibilityScope,
-                                          sharedTransitionScope: SharedTransitionScope,
-                                          assignRoles: (List<PlayerName>, List<Role>) -> Unit) =
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        val counts by viewModel.counts.collectAsState()
-        val rolesList = counts.flatMap { (role, count) -> List(count.toInt()) { role } }
+fun ChooseRolesMenu(
+    viewModel: ChooseRolesMenuViewModel,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    sharedTransitionScope: SharedTransitionScope,
+    assignRoles: (List<PlayerName>, List<Role>) -> Unit
+) = Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    val counts by viewModel.counts.collectAsState()
+    val maxReached = remember(counts) { counts.values.sum() >= viewModel.players.size.toUInt() }
+    val rolesList = counts.flatMap { (role, count) -> List(count.toInt()) { role } }
 
 //        Text(stringResource(Res.string.select_roles_title), style = MaterialTheme.typography.titleLarge)
 //        Text(stringResource(Res.string.select_roles_subtitle), style = MaterialTheme.typography.titleSmall)
-        Text(stringResource(Res.string.select_roles_title))
-        Text(stringResource(Res.string.select_roles_subtitle))
+    Text(stringResource(Res.string.select_roles_title))
+    Text(stringResource(Res.string.select_roles_subtitle))
 
-        Text("${counts.values.sum()} / ${viewModel.players.size}")
+    Text("${counts.values.sum()} / ${viewModel.players.size}")
 
-
-
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            val roles = listOf(
-                Role.Werewolf,
-                Role.SimpleVillager
-            )
-            roles.forEach {
-                RolePicker(it, counts[it] ?: 0u, true) { role, count -> viewModel.setRoleCount(role, count) }
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        val roles = listOf(
+            Role.Werewolf,
+            Role.SimpleVillager
+        )
+        roles.forEach {
+            RolePicker(it, counts[it] ?: 0u, maxReached, true) { role, count ->
+                viewModel.setRoleCount(
+                    role,
+                    count
+                )
             }
         }
+    }
 
-        HorizontalDivider()
+    HorizontalDivider()
 
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            val roles = listOf(
-                Role.Hunter,
-                Role.Seer,
-                Role.Guard,
-                Role.Witch,
-                Role.Cupid,
-                Role.WhiteWolf
-            )
-            roles.forEach {
-                RolePicker(it, counts[it] ?: 0u) { role, count -> viewModel.setRoleCount(role, count) }
-            }
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        val roles = listOf(
+            Role.Hunter,
+            Role.Seer,
+            Role.Guard,
+            Role.Witch,
+            Role.Cupid,
+            Role.WhiteWolf
+        )
+        roles.forEach {
+            RolePicker(it, counts[it] ?: 0u, maxReached) { role, count -> viewModel.setRoleCount(role, count) }
         }
+    }
 
-        val visualRolesList = counts.flatMap { (role, count) -> List(count.toInt()) { i -> role to (
-            role::class.qualifiedName + i.toString()
-        ) } }
-        val paddedElems: List<Pair<Role?, String>> =
-            visualRolesList + List((viewModel.players.size - rolesList.size).coerceAtLeast(0)) { i -> null to i.toString() }
+    val visualRolesList = counts.flatMap { (role, count) ->
+        List(count.toInt()) { i ->
+            role to role::class.qualifiedName + i.toString()
+        }
+    }
+    val paddedElems: List<Pair<Role?, String>> = visualRolesList +
+            List((viewModel.players.size - rolesList.size).coerceAtLeast(0)) { i -> null to i.toString() }
 
-        LazyVerticalGrid(GridCells.FixedSize(75.dp),modifier = Modifier
+    LazyVerticalGrid(
+        GridCells.FixedSize(75.dp), modifier = Modifier
             .widthIn(max = 75.dp * (paddedElems.size + 1) + Theme.spacing.small * (paddedElems.size - 1))
             .padding(horizontal = Theme.spacing.medium),
-            horizontalArrangement = Arrangement.spacedBy(Theme.spacing.small, Alignment.CenterHorizontally),
-            verticalArrangement = Arrangement.spacedBy(Theme.spacing.small),
-            contentPadding = PaddingValues(Theme.spacing.small)) {
-                items(
-                paddedElems,
-                key = { (role, i) -> i}) { (it, i) ->
+        horizontalArrangement = Arrangement.spacedBy(Theme.spacing.small, Alignment.CenterHorizontally),
+        verticalArrangement = Arrangement.spacedBy(Theme.spacing.small),
+        contentPadding = PaddingValues(Theme.spacing.small)
+    ) {
+        items(
+            paddedElems,
+            key = { (role, i) -> i }) { (it, i) ->
 //                LookaheadScope {
 //                    var shownSide by remember { mutableStateOf(CardSide.BackSide) }
 //                    var visibleRole by remember { mutableStateOf<Role?>(null) }
@@ -156,30 +165,36 @@ fun ChooseRolesMenu(viewModel: ChooseRolesMenuViewModel,
 //                            shownSide = CardSide.FrontSide
 //                        }
 //                    }
-                    val shownSide = if(it == null) CardSide.BackSide else CardSide.FrontSide
-                    val visibleRole = it
-                    Carte(Modifier.animateItem().fillMaxHeight().let {
-                        with(sharedTransitionScope) {
-                            it.sharedElement(
-                                this.rememberSharedContentState(i),
-                                animatedVisibilityScope = animatedVisibilityScope
-                            )
-                        }
-                    }, visibleRole, shownSide)
+            val shownSide = if (it == null) CardSide.BackSide else CardSide.FrontSide
+            val visibleRole = it
+            Carte(Modifier.animateItem().fillMaxHeight().let {
+                with(sharedTransitionScope) {
+                    it.sharedElement(
+                        this.rememberSharedContentState(i),
+                        animatedVisibilityScope = animatedVisibilityScope
+                    )
+                }
+            }, visibleRole, shownSide)
 //                }
-            }
-        }
-
-
-        Button(onClick = {
-            assignRoles(viewModel.players, rolesList)
-        }, enabled = counts.values.sum() == viewModel.players.size.toUInt()) {
-            Text(stringResource(Res.string.select_roles_continue))
         }
     }
 
+
+    Button(onClick = {
+        assignRoles(viewModel.players, rolesList)
+    }, enabled = counts.values.sum() == viewModel.players.size.toUInt()) {
+        Text(stringResource(Res.string.select_roles_continue))
+    }
+}
+
 @Composable
-private fun RolePicker(role: Role, count: UInt, multiple: Boolean = false, onCountUpdate: (Role, UInt) -> Unit) {
+private fun RolePicker(
+    role: Role,
+    count: UInt,
+    maxReached: Boolean,
+    multiple: Boolean = false,
+    onCountUpdate: (Role, UInt) -> Unit
+) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -190,13 +205,11 @@ private fun RolePicker(role: Role, count: UInt, multiple: Boolean = false, onCou
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Button(onClick = {
-                    onCountUpdate(role, if (count == 0u) 0u else count - 1u)
-                }, enabled = count > 0u) {
+                Button(onClick = { onCountUpdate(role, if (count == 0u) 0u else count - 1u) }, enabled = count > 0u) {
                     Icon(Icons.Default.Remove, null, Modifier.size(20.dp))
                 }
                 Text(count.toString())
-                Button(onClick = { onCountUpdate(role, count + 1u) }) {
+                Button(onClick = { onCountUpdate(role, count + 1u) }, enabled = !maxReached) {
                     Icon(Icons.Default.Add, null, Modifier.size(20.dp))
                 }
             }
@@ -210,6 +223,7 @@ private fun RolePicker(role: Role, count: UInt, multiple: Boolean = false, onCou
 //            }
             Button(
                 onClick = { onCountUpdate(role, (count + 1u) % 2u) },
+                enabled = !maxReached || count > 0u,
 //                colors = ButtonDefaults.buttonColors(containerColor = color)
             ) {
                 Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.graphicsLayer {

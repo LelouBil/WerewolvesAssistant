@@ -1,19 +1,18 @@
 package net.leloubil.werewolvesassistant.ui.routes.setup
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
-import androidx.compose.animation.ContentTransform
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.SharedTransitionScope
-import androidx.compose.animation.core.snap
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -23,7 +22,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import arrow.core.mapValuesNotNull
@@ -44,9 +42,13 @@ import net.leloubil.werewolvesassistant.ui.CardSide
 import net.leloubil.werewolvesassistant.ui.Carte
 import net.leloubil.werewolvesassistant.ui.theme.Button
 import net.leloubil.werewolvesassistant.ui.theme.Theme
-import net.leloubil.werewolvesassistant.ui.theme.background
+import org.jetbrains.compose.resources.stringResource
 import org.koin.android.annotation.KoinViewModel
 import org.koin.core.annotation.InjectedParam
+import werewolvesassistant.composeapp.generated.resources.Res
+import werewolvesassistant.composeapp.generated.resources.clear_button
+import werewolvesassistant.composeapp.generated.resources.confirm_button
+import werewolvesassistant.composeapp.generated.resources.randomize_button
 
 
 @KoinViewModel
@@ -59,7 +61,6 @@ class AssignRolesViewModel(@InjectedParam val players: List<PlayerName>, @Inject
                     )
         }
     }
-
 
     private val _assignments: MutableStateFlow<Map<PlayerName, Pair<Role, String>?>> =
         MutableStateFlow(players.associateWith { _ -> null })
@@ -104,7 +105,18 @@ class AssignRolesViewModel(@InjectedParam val players: List<PlayerName>, @Inject
         }
     }
 
+    fun clearAllAssignments() {
+        _assignments.update {
+            players.associateWith { _ -> null }
+        }
+    }
 
+    fun assignPlayersRandomly() {
+        val shuffledRoles = roles.shuffled()
+        _assignments.value = players.mapIndexed { idx, playerName ->
+            playerName to shuffledRoles[idx]
+        }.toMap()
+    }
 }
 
 
@@ -123,6 +135,7 @@ fun AssignRolesMenu(
         ReorderContainer(state, modifier.fillMaxSize()) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(Theme.spacing.medium),
                 modifier = Modifier.fillMaxSize().padding(vertical = Theme.spacing.small).fillMaxHeight()
             ) {
                 val absentAlpha = 0.5f
@@ -135,23 +148,24 @@ fun AssignRolesMenu(
                 val visualRolesList = viewModel.roles
 
 
-                //todo mieux https://github.com/MohamedRejeb/compose-dnd
                 LazyVerticalGrid(
-                    GridCells.FixedSize(cardSize), modifier = Modifier
+                    GridCells.FixedSize(cardSize),
+                    horizontalArrangement = Arrangement.spacedBy(Theme.spacing.medium, Alignment.CenterHorizontally),
+                    verticalArrangement = Arrangement.spacedBy(Theme.spacing.medium),
+                    modifier = Modifier
                         .padding(horizontal = Theme.spacing.medium)
-                        .widthIn(max = cardSize * (visualRolesList.size + 1) + Theme.spacing.small * (visualRolesList.size - 1)),
-                    horizontalArrangement = Arrangement.spacedBy(Theme.spacing.small, Alignment.CenterHorizontally)
+                        .widthIn(
+                            max = cardSize * visualRolesList.size + Theme.spacing.medium * (visualRolesList.size - 1)
+                        ),
                 ) {
                     items(
                         visualRolesList,
-                        key = { (role, i) -> i }) { (role, key) ->
+                        key = { (role, i) -> i }
+                    ) { (role, key) ->
                         val pickedByPlayer = assignments.any { (k, v) -> v?.second == key }
 
-
                         Box(
-                            Modifier
-                                .height(cardSize).aspectRatio(1f).animateItem()
-
+                            Modifier.height(cardSize).aspectRatio(1f).animateItem()
                         ) {
                             Carte(
                                 Modifier.fillMaxSize()
@@ -176,7 +190,7 @@ fun AssignRolesMenu(
                                 enabled = !pickedByPlayer,
                                 dropTargets = viewModel.players.map { it.name },
                                 onDrop = {
-                                    println("Dropping ${it.data} on ${key} from ${it.key}")
+                                    println("Dropping ${it.data} on $key from ${it.key}")
                                     viewModel.clearAssignment(it.data)
                                 }
                             ) {
@@ -186,40 +200,32 @@ fun AssignRolesMenu(
                                         role
                                     )
                                 }
-
                             }
                         }
-
-//                }
                     }
                 }
 
-
-
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(Theme.spacing.small),
-                    modifier = Modifier.fillMaxSize().padding(vertical = Theme.spacing.medium)
+                LazyVerticalGrid(
+                    columns = GridCells.FixedSize(cardSize),
+                    horizontalArrangement = Arrangement.spacedBy(Theme.spacing.medium, Alignment.CenterHorizontally),
+                    modifier = Modifier
+                        .padding(horizontal = Theme.spacing.medium)
+                        .widthIn(
+                            max = cardSize * (assignments.size) + Theme.spacing.medium * (assignments.size - 1)
+                        ),
                 ) {
-
-                    assignments.forEach { (player, p) ->
-                        Row(Modifier.height(cardSize), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text(player.name, style = Theme.typography.buttonTitle)
+                    items(assignments.toList()) { (player, p) ->
+                        Column(
+                            Modifier.width(cardSize).animateItem(),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
                             Box(
-                                Modifier.height(cardSize)
-                                    .aspectRatio(1f)
-
+                                Modifier.height(cardSize).aspectRatio(1f)
                             ) {
                                 Carte(Modifier.alpha(absentAlpha), front = null)
                                 println("Dragdrop ${p?.second} for $player")
                                 DraggableItemNotLeftBehind(
-                                    modifier = Modifier.fillMaxSize()
-                                        .sharedElementWithCallerManagedVisibility(
-                                            this@SharedTransitionScope
-                                                .rememberSharedContentState(p?.second ?: ""),
-                                            p != null,
-                                            zIndexInOverlay = 5f
-                                        ),
+                                    modifier = Modifier.fillMaxSize(),
                                     key = player.name,
                                     state = state,
                                     enabled = p != null,
@@ -240,21 +246,39 @@ fun AssignRolesMenu(
                                     }
                                 }
                             }
+                            Text(
+                                player.name,
+                                style = Theme.typography.buttonTitle,
+                                modifier = Modifier.align(Alignment.CenterHorizontally)
+                            )
                         }
                     }
                 }
 
-                Button(onClick = {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(Theme.spacing.medium)
+                ) {
+                    Button(onClick = {
+                        viewModel.assignPlayersRandomly()
+                    }) {
+                        Text(stringResource(Res.string.randomize_button))
+                    }
 
+                    Button(onClick = {
+                        viewModel.clearAllAssignments()
+                    }, enabled = assignments.any { it.value != null }) {
+                        Text(stringResource(Res.string.clear_button))
+                    }
+                }
+
+                Button(onClick = {
                     if (rolesList.size == viewModel.players.size) {
                         preGame(rolesList)
                     }
                 }, enabled = rolesList.size == viewModel.players.size, colorSet = Theme.colors.secondary) {
-                    Text("Valider")
+                    Text(stringResource(Res.string.confirm_button))
                 }
-
             }
-
         }
     }
 }
