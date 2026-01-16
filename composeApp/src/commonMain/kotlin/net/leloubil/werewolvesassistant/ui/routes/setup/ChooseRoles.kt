@@ -75,6 +75,13 @@ class ChooseRolesMenuViewModel(@InjectedParam val players: List<PlayerName>) : V
     }
 }
 
+
+//role vraiment unique meme si y'en a plusieurs dans la partie
+data class UniqueRole(
+    val role: Role,
+    val id: Int
+)
+
 @Composable
 fun ChooseRolesMenu(
     viewModel: ChooseRolesMenuViewModel,
@@ -131,11 +138,11 @@ fun ChooseRolesMenu(
 
     val visualRolesList = counts.flatMap { (role, count) ->
         List(count.toInt()) { i ->
-            role to role::class.qualifiedName + i.toString()
+            UniqueRole(role,i)
         }
     }
-    val paddedElems: List<Pair<Role?, String>> = visualRolesList +
-            List((viewModel.players.size - rolesList.size).coerceAtLeast(0)) { i -> null to i.toString() }
+    val paddedElems: List<Pair<UniqueRole?,String>> = visualRolesList.map { it to it.toString() } +
+            List((viewModel.players.size - rolesList.size).coerceAtLeast(0)) { i -> null to "vide$i" }
 
     LazyVerticalGrid(
         GridCells.FixedSize(75.dp), modifier = Modifier
@@ -147,7 +154,7 @@ fun ChooseRolesMenu(
     ) {
         items(
             paddedElems,
-            key = { (role, i) -> i }) { (it, i) ->
+            key = { (_,key) -> key }) { (role,_) ->
 //                LookaheadScope {
 //                    var shownSide by remember { mutableStateOf(CardSide.BackSide) }
 //                    var visibleRole by remember { mutableStateOf<Role?>(null) }
@@ -165,14 +172,16 @@ fun ChooseRolesMenu(
 //                            shownSide = CardSide.FrontSide
 //                        }
 //                    }
-            val shownSide = if (it == null) CardSide.BackSide else CardSide.FrontSide
-            val visibleRole = it
+            val shownSide = if (role == null) CardSide.BackSide else CardSide.FrontSide
+            val visibleRole = role?.role
             Carte(Modifier.animateItem().fillMaxHeight().let {
                 with(sharedTransitionScope) {
-                    it.sharedElement(
-                        this.rememberSharedContentState(i),
-                        animatedVisibilityScope = animatedVisibilityScope
-                    )
+                    role?.let { key ->
+                        it.sharedElement(
+                            this.rememberSharedContentState(key),
+                            animatedVisibilityScope = animatedVisibilityScope
+                        )
+                    } ?: Modifier
                 }
             }, visibleRole, shownSide)
 //                }

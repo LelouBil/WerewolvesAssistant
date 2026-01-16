@@ -14,6 +14,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
+import androidx.compose.ui.unit.times
 import kotlinx.coroutines.launch
 import net.leloubil.werewolvesassistant.engine.Role
 import net.leloubil.werewolvesassistant.ui.theme.LocalAccentColorSet
@@ -23,6 +28,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.pluralStringResource
 import werewolvesassistant.composeapp.generated.resources.Res
 import werewolvesassistant.composeapp.generated.resources.card_back
+import kotlin.math.min
 
 
 enum class CardSide {
@@ -86,6 +92,9 @@ fun Carte(
 
 
     }
+    val borderPercent = 0.035f
+    var borderSize by remember{mutableStateOf(0.dp)}
+    val dens = LocalDensity.current
     Box(
         Modifier
             .graphicsLayer {
@@ -97,9 +106,15 @@ fun Carte(
             .aspectRatio(1f, true)
             .clip(shape)
             .border(
-                Theme.spacing.small, LocalAccentColorSet.current.border,
+                borderSize, LocalAccentColorSet.current.border,
                 shape
             )
+            .onSizeChanged{
+                with(dens) {
+                    val base = min(it.width.toDp(), it.height.toDp())
+                    borderSize = base * borderPercent
+                }
+            }
     ) {
         val (image, desc) = actualRole?.let { it.image to pluralStringResource(it.name, 1) }
             ?: (Res.drawable.card_back to "Face cachée")

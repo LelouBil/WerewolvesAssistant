@@ -34,13 +34,14 @@ data class Game private constructor(
     val nextPrompt: GameStepPrompt<*, *>? = nextPrompts.firstOrNull()
 
     sealed interface LivingState {
-        data class Alive(val cause: GameStepData.MarksAlive?) : LivingState
+        sealed interface Alive: LivingState
+        data class Living(val resurrectCause: GameStepData.MarksAlive?) : Alive
         sealed class Dead : LivingState {
             abstract val cause: GameStepData
         }
 
         data class PublicDead(override val cause: GameStepData.MarksPublicKilled) : Dead()
-        data class NightHiddenDead(override val cause: GameStepData.NightHiddenKill) : Dead()
+        data class NightHiddenDead(val deathCause: GameStepData.NightHiddenKill): Alive
 
     }
 
@@ -176,7 +177,8 @@ inline fun <reified D : GameStepData> Game.getLast(): D? {
 }
 
 inline fun <reified T : Role> Game.hasAliveRole(role: T): Boolean {
-    return players.any { p -> getRoles(p).contains(role) && getLivingState(p) is Game.LivingState.Alive }
+    return players.any { p -> val state = getLivingState(p)
+        getRoles(p).contains(role) && state is Game.LivingState.Alive }
 }
 
 inline fun <reified T : Role> Game.hasAliveRole(): Boolean {
@@ -203,12 +205,12 @@ fun Game.getLivingState(player: PlayerName): Game.LivingState {
             }
 
             is GameStepData.MarksAlive if it.alive.contains(player) -> {
-                Game.LivingState.Alive(it)
+                Game.LivingState.Living(it)
             }
 
             else -> null
         }
-    } ?: Game.LivingState.Alive(null)
+    } ?: Game.LivingState.Living(null)
 }
 
 

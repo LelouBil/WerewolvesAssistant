@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.center
@@ -138,8 +139,8 @@ fun PreGameShowRoles(viewModel: PreGameShowRolesViewModel, nextShowIndex: () -> 
                 Carte(
                     Modifier.weight(0.7f)
                         .padding(Theme.spacing.medium)
-                        .onGloballyPositioned{
-                            lastCardSize = it.size
+                        .onSizeChanged{
+                            lastCardSize = it
                         }
                         .pointerInput(role, shownSide) {
                             awaitEachGesture {
