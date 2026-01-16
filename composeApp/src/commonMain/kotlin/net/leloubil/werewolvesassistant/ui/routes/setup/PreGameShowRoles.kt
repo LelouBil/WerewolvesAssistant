@@ -8,9 +8,19 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -19,15 +29,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.center
-import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.round
 import androidx.compose.ui.unit.toOffset
-import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.util.lerp
 import androidx.lifecycle.ViewModel
 import com.composeunstyled.Text
@@ -42,10 +49,13 @@ import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.android.annotation.KoinViewModel
 import org.koin.core.annotation.InjectedParam
-import werewolvesassistant.composeapp.generated.resources.*
+import werewolvesassistant.composeapp.generated.resources.Res
+import werewolvesassistant.composeapp.generated.resources.show_role_close
+import werewolvesassistant.composeapp.generated.resources.show_roles_player_text
+import werewolvesassistant.composeapp.generated.resources.show_roles_start_button
+import werewolvesassistant.composeapp.generated.resources.show_roles_title
 import kotlin.math.abs
 import kotlin.math.roundToInt
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
@@ -112,7 +122,7 @@ fun PreGameShowRoles(viewModel: PreGameShowRolesViewModel, nextShowIndex: () -> 
 //
 //                            time.toDouble().seconds
 //                        } else {
-                          val duration =  2.seconds
+                        val duration = 2.seconds
 //                        }
                         progress.animateTo(
                             1f,
@@ -139,7 +149,7 @@ fun PreGameShowRoles(viewModel: PreGameShowRolesViewModel, nextShowIndex: () -> 
                 Carte(
                     Modifier.weight(0.7f)
                         .padding(Theme.spacing.medium)
-                        .onSizeChanged{
+                        .onSizeChanged {
                             lastCardSize = it
                         }
                         .pointerInput(role, shownSide) {
@@ -161,7 +171,7 @@ fun PreGameShowRoles(viewModel: PreGameShowRolesViewModel, nextShowIndex: () -> 
                                     if (lastPos != null) {
                                         Modifier
                                             .align { size, size1, direction ->
-                                                if(lastPos != null) {
+                                                if (lastPos != null) {
                                                     IntOffset(
                                                         lastPos!!.position.x.roundToInt() - size.width / 2,
                                                         lastPos!!.position.y.roundToInt() - size.height / 2
@@ -179,20 +189,21 @@ fun PreGameShowRoles(viewModel: PreGameShowRolesViewModel, nextShowIndex: () -> 
                                     blendMode = BlendMode.Exclusion
 
 
-                                    val mult = if(lastCardSize != null && lastPos != null) {
+                                    val mult = if (lastCardSize != null && lastPos != null) {
                                         val a = lastPos!!.position.round()
 //                                        println("lasttouchpos: $a")
                                         val b = lastCardSize!!.center
 //                                        println("lastcardcenter: $b")
                                         val distance = a - b
 //                                        println("distance a - b: $distance")
-                                        val absed = IntOffset(abs(distance.x),abs(distance.y)).toOffset().getDistance()
+                                        val absed = IntOffset(abs(distance.x), abs(distance.y)).toOffset().getDistance()
 //                                        println("abs: $absed")
-                                        val maxMagn = IntOffset(lastCardSize!!.width,lastCardSize!!.height).toOffset().getDistance() / 2f
+                                        val maxMagn = IntOffset(lastCardSize!!.width, lastCardSize!!.height).toOffset()
+                                            .getDistance() / 2f
 //                                        println("maxmagn: $maxMagn")
                                         val perc = absed / maxMagn
 //                                        println("perc: $perc")
-                                        lerp(1.5f,3f,perc)
+                                        lerp(1.5f, 3f, perc)
 
                                     } else {
                                         1.5f

@@ -115,9 +115,13 @@ fun ChoosePlayersMenu(setRoles: (List<PlayerName>) -> Unit, viewModel: ChoosePla
             Text("Add Player")
         }
 
-        Button(onClick = {
-            setRoles(players.map { PlayerName(it.second.text.toString()) })
-        }, enabled = players.size > 3 && players.size == players.map { it.second.text.toString() }.distinct().size, colorSet = Theme.colors.secondary) {
+        Button(
+            onClick = {
+                setRoles(players.map { PlayerName(it.second.text.toString()) })
+            },
+            enabled = players.size > 3 && players.size == players.map { it.second.text.toString() }.distinct().size,
+            colorSet = Theme.colors.secondary
+        ) {
             Text("Create Game")
         }
 

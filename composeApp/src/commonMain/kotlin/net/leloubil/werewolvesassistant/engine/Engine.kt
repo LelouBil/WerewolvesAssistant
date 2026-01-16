@@ -5,7 +5,23 @@ import arrow.core.raise.Raise
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.PluralStringResource
-import werewolvesassistant.composeapp.generated.resources.*
+import werewolvesassistant.composeapp.generated.resources.Res
+import werewolvesassistant.composeapp.generated.resources.role_cupid
+import werewolvesassistant.composeapp.generated.resources.role_guard
+import werewolvesassistant.composeapp.generated.resources.role_hunter
+import werewolvesassistant.composeapp.generated.resources.role_seer
+import werewolvesassistant.composeapp.generated.resources.role_villager
+import werewolvesassistant.composeapp.generated.resources.role_werewolf
+import werewolvesassistant.composeapp.generated.resources.role_white_wolf
+import werewolvesassistant.composeapp.generated.resources.role_witch
+import werewolvesassistant.composeapp.generated.resources.roles_chasseur
+import werewolvesassistant.composeapp.generated.resources.roles_cupidon
+import werewolvesassistant.composeapp.generated.resources.roles_loup
+import werewolvesassistant.composeapp.generated.resources.roles_loup_blanc
+import werewolvesassistant.composeapp.generated.resources.roles_salvateur
+import werewolvesassistant.composeapp.generated.resources.roles_simple_villager
+import werewolvesassistant.composeapp.generated.resources.roles_sorcière
+import werewolvesassistant.composeapp.generated.resources.roles_voyante
 
 
 sealed class GameStepPromptChoosePlayer<T : GameStepData, E> : GameStepPrompt<T, E>() {

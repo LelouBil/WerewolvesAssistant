@@ -3,7 +3,17 @@ package net.leloubil.werewolvesassistant.ui.routes.setup
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyGridItemScope
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -234,7 +244,7 @@ private fun LazyGridItemScope.DragDropSourceCard(
     viewModel: AssignRolesViewModel,
     screenSharedTransitionScope: SharedTransitionScope,
 ) {
-    val pickedByPlayer = assignments.any { (k, v) -> v == role }
+    val pickedByPlayer = assignments.any { (_, v) -> v == role }
 
     Box(
         Modifier.height(cardSize).aspectRatio(1f).animateItem()
@@ -270,9 +280,9 @@ private fun LazyGridItemScope.DragDropSourceCard(
                 .rememberSharedContentState(CarteSharedKey(role))
             Carte(
                 modifier
-                    .alpha(if(state.draggedItem?.data == role && !isPlaceHolder) 0f else 1f)
+                    .alpha(if (state.draggedItem?.data == role && !isPlaceHolder) 0f else 1f)
                     .then(with(screenSharedTransitionScope) {
-                        if (!isPlaceHolder  && state.draggedItem?.data != role) {
+                        if (!isPlaceHolder && state.draggedItem?.data != role) {
                             Modifier.sharedElementWithCallerManagedVisibility(
                                 sharedContentState,
                                 !pickedByPlayer
@@ -333,7 +343,7 @@ private fun LazyGridItemScope.PlayerRoleTarget(
                         if (!isPlaceHolder || p == shownRole) {
                             Carte(
                                 Modifier
-                                    .alpha(if(state.draggedItem?.data == shownRole && !isPlaceHolder) 0f else 1f)
+                                    .alpha(if (state.draggedItem?.data == shownRole && !isPlaceHolder) 0f else 1f)
                                     .then(with(screenSharedTransitionScope) {
                                         println("Shown role ${player} : ${shownRole} : ${p == shownRole}")
                                         if (!isPlaceHolder && state.draggedItem?.data != shownRole) {

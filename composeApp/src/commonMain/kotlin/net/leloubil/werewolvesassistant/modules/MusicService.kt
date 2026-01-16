@@ -57,10 +57,6 @@ interface MusicService {
 }
 
 
-
-
-
-
 @Singleton
 class MusicServiceImpl(@Provided private val context: ContextWrapper) : MusicService {
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())

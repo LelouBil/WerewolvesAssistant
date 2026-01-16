@@ -9,7 +9,13 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
@@ -18,17 +24,14 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
-import androidx.compose.ui.unit.times
 import kotlinx.coroutines.launch
 import net.leloubil.werewolvesassistant.engine.Role
 import net.leloubil.werewolvesassistant.ui.theme.LocalAccentColorSet
-import net.leloubil.werewolvesassistant.ui.theme.Theme
 import net.leloubil.werewolvesassistant.ui.theme.border
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.pluralStringResource
 import werewolvesassistant.composeapp.generated.resources.Res
 import werewolvesassistant.composeapp.generated.resources.card_back
-import kotlin.math.min
 
 
 enum class CardSide {
@@ -51,12 +54,14 @@ fun Carte(
 
 
     var shownSide by remember { mutableStateOf(wantedSide) }
-    val rotationTransition = remember { Animatable(
-        when(shownSide){
-            CardSide.FrontSide -> 0f
-            CardSide.BackSide -> 180f
-        }
-    ) }
+    val rotationTransition = remember {
+        Animatable(
+            when (shownSide) {
+                CardSide.FrontSide -> 0f
+                CardSide.BackSide -> 180f
+            }
+        )
+    }
 
     val flipped = shownSide == CardSide.BackSide
 
@@ -67,7 +72,7 @@ fun Carte(
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(wantedSide) {
-        if(wantedSide == shownSide){
+        if (wantedSide == shownSide) {
             return@LaunchedEffect
         }
 
@@ -93,7 +98,7 @@ fun Carte(
 
     }
     val borderPercent = 0.035f
-    var borderSize by remember{mutableStateOf(0.dp)}
+    var borderSize by remember { mutableStateOf(0.dp) }
     val dens = LocalDensity.current
     Box(
         Modifier
@@ -109,7 +114,7 @@ fun Carte(
                 borderSize, LocalAccentColorSet.current.border,
                 shape
             )
-            .onSizeChanged{
+            .onSizeChanged {
                 with(dens) {
                     val base = min(it.width.toDp(), it.height.toDp())
                     borderSize = base * borderPercent
@@ -125,11 +130,11 @@ fun Carte(
                 .fillMaxSize()
 
         )
-       if(shownSide == CardSide.BackSide) {
-           overBack()
-       } else {
-           overFront()
-       }
+        if (shownSide == CardSide.BackSide) {
+            overBack()
+        } else {
+            overFront()
+        }
         overBoth()
 
     }

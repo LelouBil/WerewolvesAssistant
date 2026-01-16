@@ -8,12 +8,27 @@ import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.exclude
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,14 +51,26 @@ import kotlinx.serialization.UseSerializers
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
-import net.leloubil.werewolvesassistant.engine.*
+import net.leloubil.werewolvesassistant.engine.Game
+import net.leloubil.werewolvesassistant.engine.GameEnd
+import net.leloubil.werewolvesassistant.engine.PlayerName
+import net.leloubil.werewolvesassistant.engine.Role
+import net.leloubil.werewolvesassistant.engine.RolesList
 import net.leloubil.werewolvesassistant.modules.MusicService
 import net.leloubil.werewolvesassistant.modules.MusicStatus
 import net.leloubil.werewolvesassistant.modules.TrackMetadata
 import net.leloubil.werewolvesassistant.modules.UrlTrack
 import net.leloubil.werewolvesassistant.ui.routes.MainMenu
-import net.leloubil.werewolvesassistant.ui.routes.setup.*
-import net.leloubil.werewolvesassistant.ui.theme.*
+import net.leloubil.werewolvesassistant.ui.routes.setup.AssignRolesMenu
+import net.leloubil.werewolvesassistant.ui.routes.setup.ChoosePlayersMenu
+import net.leloubil.werewolvesassistant.ui.routes.setup.ChooseRolesMenu
+import net.leloubil.werewolvesassistant.ui.routes.setup.GameScreen
+import net.leloubil.werewolvesassistant.ui.routes.setup.PreGameShowRoles
+import net.leloubil.werewolvesassistant.ui.theme.Button
+import net.leloubil.werewolvesassistant.ui.theme.ColorSet
+import net.leloubil.werewolvesassistant.ui.theme.LocalAccentColorSet
+import net.leloubil.werewolvesassistant.ui.theme.ProvideContentColorSet
+import net.leloubil.werewolvesassistant.ui.theme.background
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -113,8 +140,7 @@ fun NavRoot(modifier: Modifier) {
                 backStack = backStack,
                 onBack = onBack,
                 entryProvider = { key ->
-                    val route = (key as NavWrapper).route
-                    when (route) {
+                    when (val route = (key as NavWrapper).route) {
                         NavRoutes.MainScreen -> NavEntry(key) { MainMenu { navigate(NavRoutes.ChoosePlayersScreen) } }
                         NavRoutes.ChoosePlayersScreen -> NavEntry(key) {
                             ChoosePlayersMenu({
@@ -219,7 +245,7 @@ fun NavRoot(modifier: Modifier) {
 private fun RowScope.AppBarContents(
     onBack: () -> Unit,
     backEnabled: Boolean,
-): Unit {
+) {
     Button(onClick = onBack, enabled = backEnabled) {
         Text("Retour")
     }

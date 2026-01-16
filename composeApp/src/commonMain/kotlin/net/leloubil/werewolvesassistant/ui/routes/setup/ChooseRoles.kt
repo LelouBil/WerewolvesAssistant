@@ -138,10 +138,10 @@ fun ChooseRolesMenu(
 
     val visualRolesList = counts.flatMap { (role, count) ->
         List(count.toInt()) { i ->
-            UniqueRole(role,i)
+            UniqueRole(role, i)
         }
     }
-    val paddedElems: List<Pair<UniqueRole?,String>> = visualRolesList.map { it to it.toString() } +
+    val paddedElems: List<Pair<UniqueRole?, String>> = visualRolesList.map { it to it.toString() } +
             List((viewModel.players.size - rolesList.size).coerceAtLeast(0)) { i -> null to "vide$i" }
 
     LazyVerticalGrid(
@@ -154,7 +154,7 @@ fun ChooseRolesMenu(
     ) {
         items(
             paddedElems,
-            key = { (_,key) -> key }) { (role,_) ->
+            key = { (_, key) -> key }) { (role, _) ->
 //                LookaheadScope {
 //                    var shownSide by remember { mutableStateOf(CardSide.BackSide) }
 //                    var visibleRole by remember { mutableStateOf<Role?>(null) }
