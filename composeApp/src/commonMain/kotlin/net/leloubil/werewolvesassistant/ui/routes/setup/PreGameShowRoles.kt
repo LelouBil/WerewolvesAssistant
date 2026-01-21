@@ -8,19 +8,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,11 +20,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.center
-import androidx.compose.ui.unit.round
-import androidx.compose.ui.unit.toOffset
+import androidx.compose.ui.unit.*
 import androidx.compose.ui.util.lerp
 import androidx.lifecycle.ViewModel
 import com.composeunstyled.Text
@@ -49,11 +35,7 @@ import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.android.annotation.KoinViewModel
 import org.koin.core.annotation.InjectedParam
-import werewolvesassistant.composeapp.generated.resources.Res
-import werewolvesassistant.composeapp.generated.resources.show_role_close
-import werewolvesassistant.composeapp.generated.resources.show_roles_player_text
-import werewolvesassistant.composeapp.generated.resources.show_roles_start_button
-import werewolvesassistant.composeapp.generated.resources.show_roles_title
+import werewolvesassistant.composeapp.generated.resources.*
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.milliseconds
@@ -74,9 +56,13 @@ fun PreGameShowRoles(viewModel: PreGameShowRolesViewModel, nextShowIndex: () -> 
         val pair = viewModel.currentRole
 
         if (pair == null) {
-            Column {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(Theme.spacing.large),
+                modifier = Modifier.fillMaxSize()
+            ) {
 //            Text(stringResource(Res.string.show_roles_title), style = MaterialTheme.typography.titleLarge)
-                Text(stringResource(Res.string.show_roles_title))
+                Text(stringResource(Res.string.show_roles_title), style = Theme.typography.title)
 
                 Button(onClick = {
                     nextShowIndex()

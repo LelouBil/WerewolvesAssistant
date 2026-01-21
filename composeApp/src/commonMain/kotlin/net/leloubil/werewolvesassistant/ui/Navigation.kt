@@ -56,10 +56,10 @@ import net.leloubil.werewolvesassistant.engine.GameEnd
 import net.leloubil.werewolvesassistant.engine.PlayerName
 import net.leloubil.werewolvesassistant.engine.Role
 import net.leloubil.werewolvesassistant.engine.RolesList
+import net.leloubil.werewolvesassistant.modules.BackgroundMusicPlayer
 import net.leloubil.werewolvesassistant.modules.MusicService
 import net.leloubil.werewolvesassistant.modules.MusicStatus
 import net.leloubil.werewolvesassistant.modules.TrackMetadata
-import net.leloubil.werewolvesassistant.modules.UrlTrack
 import net.leloubil.werewolvesassistant.ui.routes.MainMenu
 import net.leloubil.werewolvesassistant.ui.routes.setup.AssignRolesMenu
 import net.leloubil.werewolvesassistant.ui.routes.setup.ChoosePlayersMenu
@@ -74,6 +74,7 @@ import net.leloubil.werewolvesassistant.ui.theme.background
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import org.koin.core.qualifier.named
 import kotlin.time.Duration
 
 
@@ -249,7 +250,7 @@ private fun RowScope.AppBarContents(
     Button(onClick = onBack, enabled = backEnabled) {
         Text("Retour")
     }
-    MusicPlayer()
+    MusicPlayerInfo()
 }
 
 
@@ -292,8 +293,8 @@ fun MusicProgressBar(
     }
 
 @Composable
-fun MusicPlayer() = Row(verticalAlignment = Alignment.CenterVertically) {
-    val player = koinInject<MusicService>()
+fun MusicPlayerInfo() = Row(verticalAlignment = Alignment.CenterVertically) {
+    val player = koinInject<MusicService>(named<BackgroundMusicPlayer>())
 //    Text(text = "Music Player")
     val playerState by player.status.collectAsState()
 //    Text(playerState.toString())
@@ -355,14 +356,14 @@ fun MusicPlayer() = Row(verticalAlignment = Alignment.CenterVertically) {
 
 //    when (playerState) {
 //        is MusicStatus.NoMusic -> {
-    Button(onClick = {
-        player.playReplacing(
-            UrlTrack("https://www.audiocheck.net/Audio/audiocheck.net_welcome.mp3"),
-            TrackMetadata.FullMetadata("audiotest lol")
-        )
-    }) {
-        Text("Play")
-    }
+//    Button(onClick = {
+//        player.playReplacing(
+//            ("https://www.audiocheck.net/Audio/audiocheck.net_welcome.mp3"),
+//            TrackMetadata.FullMetadata("audiotest lol")
+//        )
+//    }) {
+//        Text("Play")
+//    }
 //        }
 //
 //        is MusicStatus.HasMusic -> {

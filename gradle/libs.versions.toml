@@ -43,7 +43,7 @@ androidx-lifecycle-viewmodel-navigation3 = { module = "org.jetbrains.androidx.li
 #androidx-material3-adaptive-navigation3 = { group = "org.jetbrains.compose.material3.adaptive", name = "adaptive-navigation3", version.ref = "nav3materialAdaptive" }
 
 kotlinx-coroutinesSwing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "kotlinx-coroutines" }
-
+kotlinxIo = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version = "0.8.2" }
 
 arrow-core = { module = "io.arrow-kt:arrow-core", version.ref = "arrow" }
 arrow-core-serialization = { module= "io.arrow-kt:arrow-core-serialization", version.ref = "arrow"}
@@ -81,7 +81,7 @@ dragdrop = {module = "com.mohamedrejeb.dnd:compose-dnd", version = "0.3.0"}
 
 [bundles]
 unstyled = ["unstyled", "unstyled-theming", "unstyled-primitives", "unstyled-platformTheme"]
-kotlinxEcosystem = ["kotlinxDatetime", "kotlinxSerialization", "kotlinxCoroutines"]
+kotlinxEcosystem = ["kotlinxDatetime", "kotlinxSerialization", "kotlinxCoroutines","kotlinxIo"]
 arrow  = ["arrow-core", "arrow-fxCoroutines", "arrow-resilience", "arrow-optics","arrow-optics-compose","arrow-core-serialization"]
 kotest = ["kotest-assertions-core", "kotest-assertions-arrow", "kotest-property", "kotest-property-arrow"]
 koin = ["koin-core", "koin-compose-viewModel", "koin-annotations","koin-navigation3"]

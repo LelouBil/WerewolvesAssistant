@@ -97,9 +97,12 @@ val flattenComposeResources by tasks.register<Copy>("flattenComposeResources") {
     include("**/*")
     //flatten subfolders
     eachFile {
-        val category = this.relativePath.segments.first()
-        val rest = this.relativePath.segments.drop(1).joinToString("_")
-        this.relativePath = RelativePath(this.relativePath.isFile, category, rest)
+        println(this.relativePath)
+        if(this.relativePath?.startsWith("files") != true) {
+            val category = this.relativePath.segments.first()
+            val rest = this.relativePath.segments.drop(1).joinToString("_")
+            this.relativePath = RelativePath(this.relativePath.isFile, category, rest)
+        }
     }
 }
 

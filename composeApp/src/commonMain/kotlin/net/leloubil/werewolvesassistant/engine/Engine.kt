@@ -132,6 +132,7 @@ sealed interface GameStepData {
     interface MarksPublicKilled : GameStepData {
         val killed: Set<PlayerName>
         override val checkGameEnd: Boolean get() = true
+        val addKillShowStep: Boolean get() = true
     }
 
     interface NightHiddenKill : GameStepData {
@@ -167,11 +168,21 @@ sealed class GameStepPrompt<T : GameStepData, E> {
         override fun getInfo(game: Game): Info = Info
     }
 
-    data object NightEnd : ConfirmationStepPrompt<NightEnd.Info>() {
-        data class Info(val deathsSummary: List<Pair<PlayerName, List<Role>>>) : ConfirmationStepPrompt.Info,
-            GameStepData.MarksPublicKilled {
+    data class DeadShowRole(val players: List<PlayerName>): ConfirmationStepPrompt<DeadShowRole.Info>() {
+        data class Info(val players: List<Pair<PlayerName,Role>>) : ConfirmationStepPrompt.Info {
+            override val checkGameEnd: Boolean = true
+        }
 
-            override val killed: Set<PlayerName> = deathsSummary.map { it.first }.toSet()
+        override fun shouldSkip(game: Game): Boolean = false
+        override fun getInfo(game: Game): Info {
+            return Info(players.map { it to game.getRoles(it).first() })
+        }
+    }
+
+    data object NightEnd : ConfirmationStepPrompt<NightEnd.Info>() {
+        data class Info(val deathsSummary: Set<PlayerName>) : ConfirmationStepPrompt.Info,
+            GameStepData.MarksPublicKilled {
+            override val killed: Set<PlayerName> = deathsSummary
         }
 
         override fun shouldSkip(game: Game): Boolean = false
@@ -183,19 +194,19 @@ sealed class GameStepPrompt<T : GameStepData, E> {
                     is GameStepData.MarksAlive -> acc - step.alive
                     else -> acc
                 }
-            }.map { it to game.getRoles(it) }
+            }
 
-            return Info(summary)
+            return Info(summary.toSet())
         }
     }
 
-    data class DeathByLove(val dead: PlayerName) : ConfirmationStepPrompt<DeathByLove.Info>() {
-        data class Info(val dead: PlayerName) : ConfirmationStepPrompt.Info, GameStepData.MarksPublicKilled {
+    data class DeathByLove(val cause: PlayerName,val dead: PlayerName) : ConfirmationStepPrompt<DeathByLove.Info>() {
+        data class Info(val cause: PlayerName,val dead: PlayerName) : ConfirmationStepPrompt.Info, GameStepData.MarksPublicKilled {
             override val killed: Set<PlayerName> = setOf(dead)
         }
 
         override fun shouldSkip(game: Game): Boolean = false
-        override fun getInfo(game: Game): Info = Info(dead)
+        override fun getInfo(game: Game): Info = Info(cause,dead)
     }
 
     data object CupidSetLovers : GameStepPrompt<CupidSetLovers.Data, CupidSetLovers.Error>() {
@@ -319,7 +330,7 @@ sealed class GameStepPrompt<T : GameStepData, E> {
                         shownToWitch == null || shownToWitch != data.player ->
                             Error.HealedNotTargetedPlayer(data.player)
 
-                        game.getLivingState(data.player) is Game.LivingState.Alive ->
+                        game.getLivingState(data.player) is Game.LivingState.Living ->
                             Error.HealedLivingPlayer(data.player)
 
                         game.steps.filterIsInstance<Data.Heal>().any<Data.Heal>() ->
@@ -481,7 +492,7 @@ sealed class GameStepPrompt<T : GameStepData, E> {
     }
 }
 
-private fun Game.thisNight(): List<GameStepData> {
+fun Game.thisNight(): List<GameStepData> {
     return this.steps.asReversed().takeWhile { it !is GameStepPrompt.NightBegin.Info }.reversed()
 }
 

@@ -1,5 +1,8 @@
 package net.leloubil.werewolvesassistant.ui.theme
 
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -15,15 +18,16 @@ fun Checkbox(
     modifier: Modifier = Modifier,
     colorSet: ColorSet = LocalAccentColorSet.current,
     onCheckedChange: (Boolean) -> Unit,
-    enabled: Boolean = true
+    enabled: Boolean = true,
 ) = ProvideContentColorSet(colorSet) {
     UnstyledCheckbox(
         checked = checked,
         onCheckedChange = onCheckedChange,
         enabled = enabled,
-        modifier = it.requiredSize(20.dp).then(modifier),
+        modifier = it.defaultMinSize(20.dp,20.dp).then(modifier)
+            .border(Theme.spacing.small, colorSet.border, Theme.shapes.button)
     ) {
-        Icon(Icons.Default.Check, contentDescription = "Checked")
+        Icon(Icons.Default.Check, contentDescription = "Checked", Modifier.fillMaxSize().padding(Theme.spacing.small))
     }
 }
 
